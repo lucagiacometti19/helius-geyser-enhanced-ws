@@ -1,11 +1,12 @@
 use crate::config::Config;
-use crate::handler::handle_parsed_tx;
-use crate::model::{ParsedTx, TxNotification};
-use crate::ws::parser::build_parsed_tx;
+use crate::handler::handle_tx_notification;
+use crate::model::TxNotification;
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
 use std::time::Instant;
+use tokio::sync::Semaphore;
+use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::{Mutex, mpsc};
 use tokio::time::{Duration, sleep};
 use tokio_tungstenite::connect_async;
@@ -22,20 +23,32 @@ fn parse_json<T: serde::de::DeserializeOwned>(buf: String) -> Result<T> {
 
 pub async fn run(config: Config) -> Result<()> {
     // Channel from parser → app handler
-    let (parsed_tx, mut parsed_rx) = mpsc::channel::<ParsedTx>(256);
+    let (parsed_tx, mut parsed_rx) = mpsc::channel::<(TxNotification, u64, Instant)>(256);
 
     let metrics = Arc::new(Metrics::default());
-    let _ = metrics.clone().start_metrics_collection();
+    _ = metrics.clone().start_metrics_collection();
 
+    let sem = Arc::new(Semaphore::new(100));
     // App handler task
     tokio::spawn(async move {
         while let Some(tx) = parsed_rx.recv().await {
-            metrics.observe(
-                tx.serde_time.unwrap(),
-                tx.parsedtx_time.unwrap(),
-                tx.queue_start.unwrap().elapsed().as_nanos() as u64,
-            );
-            handle_parsed_tx(tx).await;
+            let queue_time = tx.2.elapsed().as_nanos() as u64;
+            let _permit = if let Ok(permit) = sem.clone().try_acquire_owned() {
+                permit
+            } else {
+                dbg!("handler busy; waiting for semaphore");
+                sem.clone().acquire_owned().await.expect("semaphore closed")
+            };
+            let metrics = metrics.clone();
+            tokio::spawn(async move {
+                let _permit = _permit;
+                let parse_s = Instant::now();
+                if let Err(e) = handle_tx_notification(tx.0).await {
+                    warn!(error = %e, "handle_parsed_tx failed");
+                }
+                metrics.observe(tx.1, parse_s.elapsed().as_nanos() as u64, queue_time);
+                // permit drops here
+            });
         }
     });
 
@@ -56,7 +69,10 @@ pub async fn run(config: Config) -> Result<()> {
     }
 }
 
-async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<ParsedTx>) -> Result<()> {
+async fn connect_once(
+    config: &Config,
+    parsed_tx: &mpsc::Sender<(TxNotification, u64, Instant)>,
+) -> Result<()> {
     let mut url = Url::parse(&config.ws_url)?;
     // ensure ?api-key=... present
     let mut qp: Vec<(String, String)> = url
@@ -105,36 +121,38 @@ async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<ParsedTx>) -> Re
         let serde_start = Instant::now();
         match msg {
             Ok(Message::Text(txt)) => match parse_json::<TxNotification>(txt) {
-                Ok(note) => {
+                Ok(notification) => {
                     let serde_time = serde_start.elapsed().as_nanos() as u64;
-                    if let Some(params) = note.params {
-                        let parsed = build_parsed_tx(params.result).set_serde_time(serde_time);
-                        if parsed_tx
-                            .try_send(parsed.clone().start_queue_timer())
-                            .is_err()
-                        {
-                            let _ = parsed_tx.send(parsed.start_queue_timer()).await;
-                            debug!("handler channel full; used async send");
+                    let payload = (notification, serde_time, Instant::now());
+                    // kinda ugly but allows to avoid cloning TxNotification
+                    match parsed_tx.try_reserve() {
+                        Ok(permit) => {
+                            // send immediately
+                            permit.send(payload);
                         }
-                    } else {
-                        warn!("missing params in notification");
+                        Err(TrySendError::Closed(_)) => {
+                            warn!("handler channel closed");
+                        }
+                        Err(TrySendError::Full(_)) => {
+                            // no space now: wait for capacity, then send
+                            match parsed_tx.reserve().await {
+                                Ok(permit) => permit.send(payload),
+                                Err(_) => warn!("handler channel closed while waiting"),
+                            }
+                        }
                     }
                 }
                 Err(e) => {
-                    warn!(error = %e, "failed to parse JSON message");
+                    warn!(error = %e.root_cause(), "failed to parse JSON message");
                 }
             },
-            Ok(Message::Binary(_)) => {}
-            Ok(Message::Ping(_)) => { /* auto-pong handled by tungstenite */ }
+            Ok(Message::Binary(_) | Message::Ping(_) | Message::Frame(_)) => {}
             Ok(Message::Pong(_)) => {
                 debug!("pong");
             }
             Ok(Message::Close(frame)) => {
                 info!(?frame, "server closed connection");
                 break;
-            }
-            Ok(Message::Frame(_)) => {
-                debug!("frame");
             }
             Err(e) => {
                 warn!(error = %e, "WS read error");
@@ -160,10 +178,10 @@ fn build_transaction_subscribe(cfg: &Config) -> String {
     });
     let options = serde_json::json!({
         "commitment": cfg.commitment.as_str(),
-        "encoding": "jsonParsed",
+        "encoding": "base64",
         "transactionDetails": "full",
         "showRewards": false,
-        "maxSupportedTransactionVersion": 0
+        "maxSupportedTransactionVersion": 1,
     });
     let req = serde_json::json!({
         "jsonrpc": "2.0",

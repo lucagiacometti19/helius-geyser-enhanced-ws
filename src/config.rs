@@ -30,12 +30,12 @@ impl Commitment {
 
 impl Config {
     pub fn from_env() -> Result<Self> {
-        let api_key = env::var("HELIUS_API_KEY")
-            .context("Set HELIUS_API_KEY in your environment")?;
+        let api_key =
+            env::var("HELIUS_API_KEY").context("Set HELIUS_API_KEY in your environment")?;
 
         // Default Atlas mainnet WS; can override with HELIUS_WS_URL (e.g., devnet)
-        let ws_url = env::var("HELIUS_WS_URL")
-            .unwrap_or("wss://atlas-mainnet.helius-rpc.com/".to_string());
+        let ws_url =
+            env::var("HELIUS_WS_URL").unwrap_or("wss://atlas-mainnet.helius-rpc.com/".to_string());
 
         // To avoid firehose by mistake, require at least one account by default.
         let accounts = env::var("ACCOUNTS")
@@ -61,14 +61,8 @@ impl Config {
             other => bail!("Invalid COMMITMENT '{}'", other),
         };
 
-        let include_failed = matches!(
-            env::var("INCLUDE_FAILED").as_deref(),
-            Ok("1") | Ok("true")
-        );
-        let include_votes = matches!(
-            env::var("INCLUDE_VOTES").as_deref(),
-            Ok("1") | Ok("true")
-        );
+        let include_failed = matches!(env::var("INCLUDE_FAILED").as_deref(), Ok("1") | Ok("true"));
+        let include_votes = matches!(env::var("INCLUDE_VOTES").as_deref(), Ok("1") | Ok("true"));
 
         let ping_secs = env::var("PING_SECS")
             .ok()
