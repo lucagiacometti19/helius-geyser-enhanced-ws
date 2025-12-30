@@ -1,2 +1,5 @@
 /target
 /.vscode
+/.env
+/node_modules
+/pump-parser-gen

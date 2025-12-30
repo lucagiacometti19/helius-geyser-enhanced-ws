@@ -44,8 +44,8 @@ pub trait IntoTransactionStatusMeta {
 impl IntoTransactionStatusMeta for UiTransactionStatusMeta {
     fn into_transaction_status_meta(self) -> TransactionStatusMeta {
         // Convert error to status
-        let status = if let Some(err) = self.err {
-            Err(TransactionError::from(err))
+        let status: Result<(), TransactionError> = if let Some(err) = self.err {
+            Err(err)
         } else {
             Ok(())
         };
@@ -106,6 +106,7 @@ impl IntoTransactionStatusMeta for UiTransactionStatusMeta {
                 data: base64::decode(&rd.data.0).unwrap(),
             }),
             compute_units_consumed: self.compute_units_consumed.into(),
+            cost_units: None,
         }
     }
 }

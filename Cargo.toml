@@ -8,7 +8,13 @@ edition = "2024"
 [dependencies]
 dotenvy = "0.15"
 anyhow = "1.0"
-tokio = { version = "1.39", features = ["rt-multi-thread", "macros", "time", "signal", "sync"] }
+tokio = { version = "1.39", features = [
+    "rt-multi-thread",
+    "macros",
+    "time",
+    "signal",
+    "sync",
+] }
 tokio-stream = "0.1"
 tokio-tungstenite = { version = "0.24", features = ["rustls-tls-webpki-roots"] }
 tracing = "0.1"
@@ -17,15 +23,27 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 url = "2.5"
+redis = { version = "0.26", features = [
+    "tokio-comp",
+    "json",
+    "connection-manager",
+] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
-yellowstone-vixen-pumpfun-parser = "0"
-yellowstone-vixen-core = "0"
-yellowstone-grpc-proto = { version = "=6.1.0", default-features = false, features = ["convert"] }
+yellowstone-vixen-pumpfun-parser = "0.5.1"
+pump-parser-gen = { path = "./pump-parser-gen" }
+yellowstone-vixen-core = "0.5.1"
+yellowstone-grpc-proto = { version = "9.1.0", default-features = false, features = [
+    "convert",
+] }
 base64 = "0.13"
 # pin to the 2.2 line to match Yellowstone/Vixen
-solana-transaction = { version = "2", features = ["serde", "bincode", "blake3"] }
-solana-message     = { version = "2" }
-solana-pubkey      = { version = "2" }
+solana-transaction = { version = "2", features = [
+    "serde",
+    "bincode",
+    "blake3",
+] }
+solana-message = { version = "2" }
+solana-pubkey = { version = "2" }
 solana-transaction-status = { version = "2" }
 solana-transaction-error = { version = "2" }
 solana-transaction-context = { version = "2" }

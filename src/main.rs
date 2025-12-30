@@ -1,6 +1,7 @@
 mod config;
-mod handler;
+mod handlers;
 mod model;
+mod redis;
 mod ws;
 
 use crate::config::Config;
@@ -13,12 +14,15 @@ use tracing_subscriber::{EnvFilter, fmt};
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    // wtf is this?
     let _ = CryptoProvider::install_default(ring_default());
 
-    // fast, structured logging
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into());
-    fmt().with_env_filter(filter).compact().init();
+    fmt()
+        .with_env_filter(filter)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .compact()
+        .init();
 
     let config = Config::from_env()?;
     ws::run(config).await?;

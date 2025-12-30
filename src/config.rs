@@ -10,6 +10,7 @@ pub struct Config {
     pub include_failed: bool,
     pub include_votes: bool,
     pub ping_secs: u64,
+    pub redis_url: String,
 }
 
 #[derive(Clone, Debug)]
@@ -61,13 +62,20 @@ impl Config {
             other => bail!("Invalid COMMITMENT '{}'", other),
         };
 
-        let include_failed = matches!(env::var("INCLUDE_FAILED").as_deref(), Ok("1") | Ok("true"));
+        // default to false
+        let t = matches!(env::var("INCLUDE_FAILED").as_deref(), Ok("1") | Ok("true"));
+        dbg!(t);
+        let include_failed = t;
         let include_votes = matches!(env::var("INCLUDE_VOTES").as_deref(), Ok("1") | Ok("true"));
 
+        // default to 30 seconds
         let ping_secs = env::var("PING_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(30);
+
+        // default to localhost db 0
+        let redis_url = env::var("REDIS_URL").unwrap_or("redis://127.0.0.1:6379/0".to_string());
 
         Ok(Self {
             ws_url,
@@ -77,6 +85,7 @@ impl Config {
             include_failed,
             include_votes,
             ping_secs,
+            redis_url,
         })
     }
 }

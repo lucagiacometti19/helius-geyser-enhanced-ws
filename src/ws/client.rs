@@ -1,6 +1,7 @@
 use crate::config::Config;
-use crate::handler::handle_tx_notification;
+use crate::handlers::handle_tx_notification;
 use crate::model::TxNotification;
+use crate::redis::RedisManager;
 use anyhow::{Context, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
@@ -22,57 +23,96 @@ fn parse_json<T: serde::de::DeserializeOwned>(buf: String) -> Result<T> {
 }
 
 pub async fn run(config: Config) -> Result<()> {
-    // Channel from parser → app handler
-    let (parsed_tx, mut parsed_rx) = mpsc::channel::<(TxNotification, u64, Instant)>(256);
+    // Channel from websocket → app handler
+    // We send raw Strings to offload parsing to the parallel workers
+    let (parsed_tx, mut parsed_rx) = mpsc::channel::<(String, Instant)>(4096);
 
     let metrics = Arc::new(Metrics::default());
-    _ = metrics.clone().start_metrics_collection();
+    metrics.clone().start_metrics_collection();
+
+    let redis_manager = Arc::new(
+        RedisManager::new(&config.redis_url)
+            .await
+            .context("Failed to init Redis")?,
+    );
 
     let sem = Arc::new(Semaphore::new(100));
-    // App handler task
-    tokio::spawn(async move {
-        while let Some(tx) = parsed_rx.recv().await {
-            let queue_time = tx.2.elapsed().as_nanos() as u64;
-            let _permit = if let Ok(permit) = sem.clone().try_acquire_owned() {
-                permit
-            } else {
-                dbg!("handler busy; waiting for semaphore");
-                sem.clone().acquire_owned().await.expect("semaphore closed")
-            };
-            let metrics = metrics.clone();
-            tokio::spawn(async move {
-                let _permit = _permit;
-                let parse_s = Instant::now();
-                if let Err(e) = handle_tx_notification(tx.0).await {
-                    warn!(error = %e, "handle_parsed_tx failed");
-                }
-                metrics.observe(tx.1, parse_s.elapsed().as_nanos() as u64, queue_time);
-                // permit drops here
-            });
-        }
-    });
+    // App handler task - Dedicated thread for dispatcher
+    let handle = tokio::runtime::Handle::current();
+    let handle_for_connector = handle.clone();
+    let metrics_for_dispatcher = metrics.clone();
+    let redis_for_dispatcher = redis_manager.clone();
+    std::thread::Builder::new()
+        .name("app-dispatcher".into())
+        .spawn(move || {
+            handle.block_on(async move {
+                while let Some((txt, recv_ts)) = parsed_rx.recv().await {
+                    let wait_time = recv_ts.elapsed().as_nanos() as u64;
+                    let _permit = if let Ok(permit) = sem.clone().try_acquire_owned() {
+                        permit
+                    } else {
+                        warn!("Handler busy; waiting for semaphore!");
+                        sem.clone().acquire_owned().await.expect("semaphore closed")
+                    };
+                    let metrics = metrics_for_dispatcher.clone();
+                    let redis = redis_for_dispatcher.clone();
+                    tokio::spawn(async move {
+                        let _permit = _permit;
 
-    // Connection loop with backoff
-    let mut backoff_ms = 500u64;
-    loop {
-        match connect_once(&config, &parsed_tx).await {
-            Ok(_) => {
-                // Normal close — reset backoff
-                backoff_ms = 500;
-            }
-            Err(err) => {
-                error!(error = %err, "WS connection failed");
-                sleep(Duration::from_millis(backoff_ms)).await;
-                backoff_ms = (backoff_ms * 2).min(30_000);
-            }
-        }
-    }
+                        let parse_s = Instant::now();
+                        match parse_json::<TxNotification>(txt) {
+                            Ok(tx) => {
+                                let parse_time = parse_s.elapsed().as_nanos() as u64;
+                                let logic_s = Instant::now();
+
+                                if let Err(e) = handle_tx_notification(tx, redis).await {
+                                    warn!(error = %e, "Txn handler failed");
+                                }
+
+                                let logic_time = logic_s.elapsed().as_nanos() as u64;
+                                metrics.observe(wait_time, parse_time, logic_time);
+                            }
+                            Err(e) => {
+                                error!(error = %e.root_cause(), "Failed to parse JSON message");
+                            }
+                        }
+                        // permit drops here
+                    });
+                }
+            })
+        })
+        .expect("Failed to spawn app-dispatcher thread");
+
+    // Connection loop with backoff - Dedicated thread
+    let _connector_thread = std::thread::Builder::new()
+        .name("ws-connector".into())
+        .spawn(move || {
+            handle_for_connector.block_on(async move {
+                let mut backoff_ms = 500u64;
+                loop {
+                    match connect_once(&config, &parsed_tx).await {
+                        Ok(_) => {
+                            // Normal close — reset backoff
+                            backoff_ms = 500;
+                        }
+                        Err(err) => {
+                            error!(error = %err, "WS connection failed");
+                            sleep(Duration::from_millis(backoff_ms)).await;
+                            backoff_ms = (backoff_ms * 2).min(30_000);
+                        }
+                    }
+                }
+            })
+        })
+        .expect("Failed to spawn ws-connector thread");
+
+    // Keep the main 'run' future alive as long as we want the app to run.
+    // Since we spawned everything into dedicated threads, we just wait here.
+    futures_util::future::pending::<()>().await;
+    Ok(())
 }
 
-async fn connect_once(
-    config: &Config,
-    parsed_tx: &mpsc::Sender<(TxNotification, u64, Instant)>,
-) -> Result<()> {
+async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<(String, Instant)>) -> Result<()> {
     let mut url = Url::parse(&config.ws_url)?;
     // ensure ?api-key=... present
     let mut qp: Vec<(String, String)> = url
@@ -84,10 +124,10 @@ async fn connect_once(
     }
     url.query_pairs_mut().clear().extend_pairs(qp);
 
-    info!(%url, "connecting to Helius Enhanced WebSocket");
+    info!(%url, "Connecting to Helius Enhanced WebSocket");
     let (ws_stream, _resp) = connect_async(url.as_str())
         .await
-        .context("connect_async failed")?;
+        .context("Failed to connect to Helius Enhanced WebSocket")?;
     let (write, mut read) = ws_stream.split();
 
     // Share the write half for pings and any other sends
@@ -100,58 +140,60 @@ async fn connect_once(
         w.send(Message::Text(subscribe)).await?;
     }
 
-    // Ping task
+    // Ping task - Dedicated thread
     let ping_secs = config.ping_secs;
+    let handle = tokio::runtime::Handle::current();
     let write_for_ping = write.clone();
-    let ping_handle = tokio::spawn(async move {
-        let mut interval = tokio::time::interval(Duration::from_secs(ping_secs));
-        loop {
-            interval.tick().await;
-            debug!("ping");
-            let mut w = write_for_ping.lock().await;
-            if let Err(e) = w.send(Message::Ping(Vec::new())).await {
-                warn!(error = %e, "ping failed; ending ping task");
-                break;
-            }
-        }
-    });
+    let _ping_thread = std::thread::Builder::new()
+        .name("ws-pinger".into())
+        .spawn(move || {
+            handle.block_on(async move {
+                let mut interval = tokio::time::interval(Duration::from_secs(ping_secs));
+                loop {
+                    interval.tick().await;
+                    debug!("ping");
+                    let mut w = write_for_ping.lock().await;
+                    if let Err(e) = w.send(Message::Ping(Vec::new())).await {
+                        error!(error = %e, "Ping failed; ending ping task");
+                        break;
+                    }
+                }
+            })
+        })
+        .expect("Failed to spawn ws-pinger thread");
 
     // Reader loop
     while let Some(msg) = read.next().await {
-        let serde_start = Instant::now();
         match msg {
-            Ok(Message::Text(txt)) => match parse_json::<TxNotification>(txt) {
-                Ok(notification) => {
-                    let serde_time = serde_start.elapsed().as_nanos() as u64;
-                    let payload = (notification, serde_time, Instant::now());
-                    // kinda ugly but allows to avoid cloning TxNotification
-                    match parsed_tx.try_reserve() {
-                        Ok(permit) => {
-                            // send immediately
-                            permit.send(payload);
-                        }
-                        Err(TrySendError::Closed(_)) => {
-                            warn!("handler channel closed");
-                        }
-                        Err(TrySendError::Full(_)) => {
-                            // no space now: wait for capacity, then send
-                            match parsed_tx.reserve().await {
-                                Ok(permit) => permit.send(payload),
-                                Err(_) => warn!("handler channel closed while waiting"),
+            Ok(Message::Text(txt)) => {
+                let recv_ts = Instant::now();
+                match parsed_tx.try_reserve() {
+                    Ok(permit) => {
+                        // send immediately
+                        permit.send((txt, recv_ts));
+                    }
+                    Err(TrySendError::Closed(_)) => {
+                        error!("Handler channel closed");
+                        break;
+                    }
+                    Err(TrySendError::Full(_)) => {
+                        // no space now: wait for capacity, then send
+                        match parsed_tx.reserve().await {
+                            Ok(permit) => permit.send((txt, recv_ts)),
+                            Err(_) => {
+                                error!("Handler channel closed while waiting");
+                                break;
                             }
                         }
                     }
                 }
-                Err(e) => {
-                    warn!(error = %e.root_cause(), "failed to parse JSON message");
-                }
-            },
+            }
             Ok(Message::Binary(_) | Message::Ping(_) | Message::Frame(_)) => {}
             Ok(Message::Pong(_)) => {
-                debug!("pong");
+                debug!("Pong");
             }
             Ok(Message::Close(frame)) => {
-                info!(?frame, "server closed connection");
+                info!(?frame, "Server closed connection");
                 break;
             }
             Err(e) => {
@@ -161,8 +203,7 @@ async fn connect_once(
         }
     }
 
-    // Stop ping and try to close nicely
-    ping_handle.abort();
+    // @todo: stop ping and try to close nicely
     if let Ok(mut w) = write.try_lock() {
         let _ = w.send(Message::Close(None)).await;
     }

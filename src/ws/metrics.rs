@@ -1,66 +1,78 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
-use tokio::task::JoinHandle;
-use tracing::debug;
+use tracing::{debug, info};
 
 #[derive(Default, Debug)]
 pub(crate) struct Metrics {
     count: AtomicU64,
-    // Separate fields for each timing type
-    serde_sum_ns: AtomicU64,    // JSON deserialization time
-    parsedtx_sum_ns: AtomicU64, // Structure extraction time
-    queue_sum_ns: AtomicU64,    // Time in queue before processing
+    // Timings
+    wait_sum_ns: AtomicU64,  // WS recv -> Worker start
+    parse_sum_ns: AtomicU64, // JSON parsing
+    logic_sum_ns: AtomicU64, // Handler/Logic/Redis
+    e2e_sum_ns: AtomicU64,   // Total internal latency
 
-    // Track worst cases separately
-    worst_serde_ns: AtomicU64,
-    worst_parsedtx_ns: AtomicU64,
-    worst_queue_ns: AtomicU64,
+    // Worst cases
+    worst_wait_ns: AtomicU64,
+    worst_parse_ns: AtomicU64,
+    worst_logic_ns: AtomicU64,
+    worst_e2e_ns: AtomicU64,
 }
 
 impl Metrics {
-    pub(crate) fn observe(&self, serde_ns: u64, parsedtx_ns: u64, queue_ns: u64) {
+    pub(crate) fn observe(&self, wait_ns: u64, parse_ns: u64, logic_ns: u64) {
+        let total_ns = wait_ns + parse_ns + logic_ns;
         self.count.fetch_add(1, Ordering::Relaxed);
-        self.serde_sum_ns.fetch_add(serde_ns, Ordering::Relaxed);
-        self.parsedtx_sum_ns
-            .fetch_add(parsedtx_ns, Ordering::Relaxed);
-        self.queue_sum_ns.fetch_add(queue_ns, Ordering::Relaxed);
 
-        // Update worst case timings
-        self.update_max(&self.worst_serde_ns, serde_ns);
-        self.update_max(&self.worst_parsedtx_ns, parsedtx_ns);
-        self.update_max(&self.worst_queue_ns, queue_ns);
+        self.wait_sum_ns.fetch_add(wait_ns, Ordering::Relaxed);
+        self.parse_sum_ns.fetch_add(parse_ns, Ordering::Relaxed);
+        self.logic_sum_ns.fetch_add(logic_ns, Ordering::Relaxed);
+        self.e2e_sum_ns.fetch_add(total_ns, Ordering::Relaxed);
+
+        self.update_max(&self.worst_wait_ns, wait_ns);
+        self.update_max(&self.worst_parse_ns, parse_ns);
+        self.update_max(&self.worst_logic_ns, logic_ns);
+        self.update_max(&self.worst_e2e_ns, total_ns);
     }
 
-    pub(crate) fn start_metrics_collection(self: Arc<Self>) -> JoinHandle<()> {
-        // Periodic reporter every 5s
-        tokio::spawn(async move {
-            let mut ticker = tokio::time::interval(std::time::Duration::from_secs(5));
-            loop {
-                ticker.tick().await;
-                let n = self.count.load(Ordering::Relaxed);
-                if n == 0 {
-                    continue;
-                }
-                let serde_sum = self.serde_sum_ns.load(Ordering::Relaxed);
-                let parsedtx_sum = self.parsedtx_sum_ns.load(Ordering::Relaxed);
-                let queue_sum = self.queue_sum_ns.load(Ordering::Relaxed);
+    pub(crate) fn start_metrics_collection(self: Arc<Self>) {
+        let handle = tokio::runtime::Handle::current();
+        std::thread::Builder::new()
+            .name("metrics-reporter".into())
+            .spawn(move || {
+                handle.block_on(async move {
+                    let mut ticker = tokio::time::interval(std::time::Duration::from_secs(5));
+                    loop {
+                        ticker.tick().await;
+                        let n = self.count.load(Ordering::Relaxed);
+                        if n == 0 {
+                            continue;
+                        }
+                        let wait_sum = self.wait_sum_ns.load(Ordering::Relaxed);
+                        let parse_sum = self.parse_sum_ns.load(Ordering::Relaxed);
+                        let logic_sum = self.logic_sum_ns.load(Ordering::Relaxed);
+                        let e2e_sum = self.e2e_sum_ns.load(Ordering::Relaxed);
 
-                let worst_serde = self.worst_serde_ns.load(Ordering::Relaxed);
-                let worst_parsedtx = self.worst_parsedtx_ns.load(Ordering::Relaxed);
-                let worst_queue = self.worst_queue_ns.load(Ordering::Relaxed);
+                        let worst_wait = self.worst_wait_ns.load(Ordering::Relaxed);
+                        let worst_parse = self.worst_parse_ns.load(Ordering::Relaxed);
+                        let worst_logic = self.worst_logic_ns.load(Ordering::Relaxed);
+                        let worst_e2e = self.worst_e2e_ns.load(Ordering::Relaxed);
 
-                debug!(
-                    "avg serde: {}ns | avg extract: {}ns | avg queue: {}ns | worst serde: {}ns | worst extract: {}ns | worst queue: {}ns (n={})",
-                    serde_sum / n,
-                    parsedtx_sum / n,
-                    queue_sum / n,
-                    worst_serde,
-                    worst_parsedtx,
-                    worst_queue,
-                    n
-                );
-            }
-        })
+                        info!(
+                            "avg [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] worst [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] (n={})",
+                            wait_sum / n,
+                            parse_sum / n,
+                            logic_sum / n,
+                            e2e_sum / n,
+                            worst_wait,
+                            worst_parse,
+                            worst_logic,
+                            worst_e2e,
+                            n
+                        );
+                    }
+                })
+            })
+            .expect("failed to spawn metrics-reporter thread");
     }
 
     // This stays the same
