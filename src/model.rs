@@ -135,14 +135,18 @@ pub trait IntoInnerInstruction {
 impl IntoInnerInstruction for UiInstruction {
     fn into_inner_instruction(self) -> InnerInstruction {
         match self {
-            Self::Compiled(ui_ci) => InnerInstruction {
-                instruction: CompiledInstruction {
-                    program_id_index: ui_ci.program_id_index,
-                    accounts: ui_ci.accounts,
-                    data: ui_ci.data.into(),
-                },
-                stack_height: ui_ci.stack_height,
-            },
+            Self::Compiled(ui_ci) => {
+                InnerInstruction {
+                    instruction: CompiledInstruction {
+                        program_id_index: ui_ci.program_id_index,
+                        accounts: ui_ci.accounts,
+                        // @todo: is this always base58? or depends on ws subscription encoding?
+                        // with the current setup i always get base58
+                        data: bs58::decode(&ui_ci.data).into_vec().unwrap(),
+                    },
+                    stack_height: ui_ci.stack_height,
+                }
+            }
             Self::Parsed(_) => {
                 panic!("Parsed instructions are not supported");
             }

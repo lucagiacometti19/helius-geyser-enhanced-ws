@@ -7,10 +7,24 @@ use solana_transaction::sanitized::{MessageHash, SanitizedTransaction};
 use std::collections::HashSet;
 use std::str::FromStr;
 use yellowstone_grpc_proto::convert_to;
+#[derive(Debug, Clone)]
 pub enum PlatformActivity {
-    Buy { amount: u64 },
-    Sell { amount: u64 },
-    Other,
+    Buy {
+        amount: u64,
+        mint: String,
+        ix_name: String,
+        slippage_percent: Option<f64>,
+    },
+    Sell {
+        amount: u64,
+        mint: String,
+        ix_name: String,
+        slippage_percent: Option<f64>,
+    },
+    Other {
+        ix_name: String,
+        mint: Option<String>,
+    },
 }
 
 pub struct TxLabels {
@@ -25,6 +39,7 @@ pub struct TxLabels {
     pub current_ts: u64,
     pub jito_tip: u64,
     pub block: u64,
+    pub activities: Vec<PlatformActivity>,
 }
 
 const JITO_TIP_ACCOUNTS: [&str; 8] = [
@@ -143,6 +158,7 @@ pub fn extract_labels(tx: &TxNotification) -> Result<(TxLabels, SanitizedTransac
             current_ts,
             jito_tip,
             block: tx_params.result.slot,
+            activities: vec![],
         },
         sanitized,
     ))

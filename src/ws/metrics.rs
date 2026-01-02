@@ -35,44 +35,38 @@ impl Metrics {
     }
 
     pub(crate) fn start_metrics_collection(self: Arc<Self>) {
-        let handle = tokio::runtime::Handle::current();
-        std::thread::Builder::new()
-            .name("metrics-reporter".into())
-            .spawn(move || {
-                handle.block_on(async move {
-                    let mut ticker = tokio::time::interval(std::time::Duration::from_secs(5));
-                    loop {
-                        ticker.tick().await;
-                        let n = self.count.load(Ordering::Relaxed);
-                        if n == 0 {
-                            continue;
-                        }
-                        let wait_sum = self.wait_sum_ns.load(Ordering::Relaxed);
-                        let parse_sum = self.parse_sum_ns.load(Ordering::Relaxed);
-                        let logic_sum = self.logic_sum_ns.load(Ordering::Relaxed);
-                        let e2e_sum = self.e2e_sum_ns.load(Ordering::Relaxed);
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(std::time::Duration::from_secs(30));
+            loop {
+                ticker.tick().await;
+                let n = self.count.load(Ordering::Relaxed);
+                if n == 0 {
+                    continue;
+                }
+                let wait_sum = self.wait_sum_ns.load(Ordering::Relaxed);
+                let parse_sum = self.parse_sum_ns.load(Ordering::Relaxed);
+                let logic_sum = self.logic_sum_ns.load(Ordering::Relaxed);
+                let e2e_sum = self.e2e_sum_ns.load(Ordering::Relaxed);
 
-                        let worst_wait = self.worst_wait_ns.load(Ordering::Relaxed);
-                        let worst_parse = self.worst_parse_ns.load(Ordering::Relaxed);
-                        let worst_logic = self.worst_logic_ns.load(Ordering::Relaxed);
-                        let worst_e2e = self.worst_e2e_ns.load(Ordering::Relaxed);
+                let worst_wait = self.worst_wait_ns.load(Ordering::Relaxed);
+                let worst_parse = self.worst_parse_ns.load(Ordering::Relaxed);
+                let worst_logic = self.worst_logic_ns.load(Ordering::Relaxed);
+                let worst_e2e = self.worst_e2e_ns.load(Ordering::Relaxed);
 
-                        info!(
-                            "avg [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] worst [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] (n={})",
-                            wait_sum / n,
-                            parse_sum / n,
-                            logic_sum / n,
-                            e2e_sum / n,
-                            worst_wait,
-                            worst_parse,
-                            worst_logic,
-                            worst_e2e,
-                            n
-                        );
-                    }
-                })
-            })
-            .expect("failed to spawn metrics-reporter thread");
+                info!(
+                    "avg [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] worst [wait: {}ns | parse: {}ns | logic: {}ns | total: {}ns] (n={})",
+                    wait_sum / n,
+                    parse_sum / n,
+                    logic_sum / n,
+                    e2e_sum / n,
+                    worst_wait,
+                    worst_parse,
+                    worst_logic,
+                    worst_e2e,
+                    n
+                );
+            }
+        });
     }
 
     // This stays the same

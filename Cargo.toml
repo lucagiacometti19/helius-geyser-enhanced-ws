@@ -29,9 +29,10 @@ redis = { version = "0.26", features = [
     "connection-manager",
 ] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
-yellowstone-vixen-pumpfun-parser = "0.5.1"
-pump-parser-gen = { path = "./pump-parser-gen" }
-yellowstone-vixen-core = "0.5.1"
+yellowstone-vixen-pumpfun-parser = { path = "./pumpfun" }
+yellowstone-vixen-core = { git = "https://github.com/rpcpool/yellowstone-vixen", branch = "main", features = [
+    "proto",
+] }
 yellowstone-grpc-proto = { version = "9.1.0", default-features = false, features = [
     "convert",
 ] }
@@ -47,3 +48,5 @@ solana-pubkey = { version = "2" }
 solana-transaction-status = { version = "2" }
 solana-transaction-error = { version = "2" }
 solana-transaction-context = { version = "2" }
+bs58 = "0.5.1"
+borsh = "0.10"

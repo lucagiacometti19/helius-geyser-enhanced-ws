@@ -391,11 +391,11 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "1.5.7"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad8646f98db542e39fc66e68a20b2144f6a732636df7c2354e74645faaa433ce"
+checksum = "d1da5ab77c1437701eeff7c88d968729e7766172279eab0676857b3d63af7a6f"
 dependencies = [
- "borsh-derive 1.5.7",
+ "borsh-derive 1.6.0",
  "cfg_aliases",
 ]
 
@@ -414,9 +414,9 @@ dependencies = [
 
 [[package]]
 name = "borsh-derive"
-version = "1.5.7"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdd1d3c0c2f5833f22386f252fe8ed005c7f59fdcddeef025c01b4c3b9fd9ac3"
+checksum = "0686c856aa6aac0c4498f936d7d6a02df690f614c03e4d906d1018062b5c5e2c"
 dependencies = [
  "once_cell",
  "proc-macro-crate 3.3.0",
@@ -1064,9 +1064,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.13.1",
+ "borsh 0.10.4",
+ "bs58",
  "dotenvy",
  "futures-util",
- "pump-parser-gen",
  "redis",
  "rustls",
  "serde",
@@ -1969,28 +1970,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pump-parser-gen"
-version = "0.1.0"
-dependencies = [
- "borsh 0.10.4",
- "num-derive",
- "num-traits",
- "prost 0.13.5",
- "prost-build 0.13.5",
- "solana-account-info",
- "solana-cpi",
- "solana-decode-error",
- "solana-instruction",
- "solana-msg",
- "solana-program-entrypoint",
- "solana-program-error",
- "solana-pubkey",
- "thiserror 1.0.69",
- "tonic",
- "yellowstone-vixen-core",
-]
-
-[[package]]
 name = "qstring"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2595,7 +2574,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "718333bcd0a1a7aed6655aa66bef8d7fb047944922b2d3a18f49cbc13e73d004"
 dependencies = [
  "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh 1.6.0",
 ]
 
 [[package]]
@@ -2768,7 +2747,7 @@ version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5b96e9f0300fa287b545613f007dfe20043d7812bee255f418c1eb649c93b63"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "bytemuck",
  "bytemuck_derive",
  "five8",
@@ -2787,7 +2766,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47298e2ce82876b64f71e9d13a46bc4b9056194e7f9937ad3084385befa50885"
 dependencies = [
  "bincode",
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "getrandom 0.2.16",
  "js-sys",
  "num-traits",
@@ -2961,7 +2940,7 @@ dependencies = [
  "bincode",
  "blake3",
  "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "bs58",
  "bytemuck",
  "console_error_panic_hook",
@@ -3050,7 +3029,7 @@ version = "2.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ee2e0217d642e2ea4bee237f37bd61bb02aec60da3647c48ff88f6556ade775"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "num-traits",
  "serde",
  "serde_derive",
@@ -3091,7 +3070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b62adb9c3261a052ca1f999398c388f1daf558a1b492f60a6d9e64857db4ff1"
 dependencies = [
  "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "bytemuck",
  "bytemuck_derive",
  "curve25519-dalek 4.1.3",
@@ -3305,7 +3284,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5269e89fde216b4d7e1d1739cf5303f8398a1ff372a81232abbee80e554a838c"
 dependencies = [
  "borsh 0.10.4",
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "num-traits",
  "serde",
  "serde_derive",
@@ -3452,7 +3431,7 @@ dependencies = [
  "agave-reserved-account-keys",
  "base64 0.22.1",
  "bincode",
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "bs58",
  "log",
  "serde",
@@ -3575,7 +3554,7 @@ version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae179d4a26b3c7a20c839898e6aed84cb4477adf108a366c95532f058aea041b"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "num-derive",
  "num-traits",
  "solana-program",
@@ -3684,7 +3663,7 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d994afaf86b779104b4a95ba9ca75b8ced3fdb17ee934e38cb69e72afbe17799"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "bytemuck",
  "bytemuck_derive",
  "num-derive",
@@ -3887,7 +3866,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "304d6e06f0de0c13a621464b1fd5d4b1bebf60d15ca71a44d3839958e0da16ee"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 1.6.0",
  "num-derive",
  "num-traits",
  "solana-borsh",
@@ -4853,10 +4832,10 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-vixen-core"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c12d47305c777c1f2fda691ef555583eca9201020c975e7f139bdb36e0534cba"
+version = "0.6.0-alpha.0"
+source = "git+https://github.com/rpcpool/yellowstone-vixen?branch=main#ac780db2d4285105b870e03adf9558ce4cf877e8"
 dependencies = [
+ "borsh 1.6.0",
  "bs58",
  "clap",
  "serde",
@@ -4867,25 +4846,21 @@ dependencies = [
 
 [[package]]
 name = "yellowstone-vixen-proto"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e5b13c960b1085a07b576dec38d3f99a9e0fd491f0e5f1f9d38f028ef660090"
+version = "0.6.0-alpha.0"
+source = "git+https://github.com/rpcpool/yellowstone-vixen?branch=main#ac780db2d4285105b870e03adf9558ce4cf877e8"
 dependencies = [
  "prost 0.13.5",
 ]
 
 [[package]]
 name = "yellowstone-vixen-pumpfun-parser"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "005c7411257ea015d7eac19726181847836e56aa0de40cbdedc62a46a2e11179"
+version = "0.1.0"
 dependencies = [
- "borsh 1.5.7",
+ "borsh 0.10.4",
  "num-derive",
  "num-traits",
  "prost 0.13.5",
  "prost-build 0.13.5",
- "protobuf-src",
  "solana-account-info",
  "solana-cpi",
  "solana-decode-error",

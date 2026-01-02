@@ -36,79 +36,62 @@ pub async fn run(config: Config) -> Result<()> {
             .context("Failed to init Redis")?,
     );
 
-    let sem = Arc::new(Semaphore::new(100));
-    // App handler task - Dedicated thread for dispatcher
-    let handle = tokio::runtime::Handle::current();
-    let handle_for_connector = handle.clone();
+    let sem = Arc::new(Semaphore::new(20));
+    // App handler task
     let metrics_for_dispatcher = metrics.clone();
     let redis_for_dispatcher = redis_manager.clone();
-    std::thread::Builder::new()
-        .name("app-dispatcher".into())
-        .spawn(move || {
-            handle.block_on(async move {
-                while let Some((txt, recv_ts)) = parsed_rx.recv().await {
-                    let wait_time = recv_ts.elapsed().as_nanos() as u64;
-                    let _permit = if let Ok(permit) = sem.clone().try_acquire_owned() {
-                        permit
-                    } else {
-                        warn!("Handler busy; waiting for semaphore!");
-                        sem.clone().acquire_owned().await.expect("semaphore closed")
-                    };
-                    let metrics = metrics_for_dispatcher.clone();
-                    let redis = redis_for_dispatcher.clone();
-                    tokio::spawn(async move {
-                        let _permit = _permit;
+    tokio::spawn(async move {
+        while let Some((txt, recv_ts)) = parsed_rx.recv().await {
+            let wait_time = recv_ts.elapsed().as_nanos() as u64;
+            let _permit = if let Ok(permit) = sem.clone().try_acquire_owned() {
+                permit
+            } else {
+                warn!("Handler busy: waiting for semaphore!");
+                sem.clone().acquire_owned().await.expect("Semaphore closed")
+            };
+            let metrics = metrics_for_dispatcher.clone();
+            let redis = redis_for_dispatcher.clone();
 
-                        let parse_s = Instant::now();
-                        match parse_json::<TxNotification>(txt) {
-                            Ok(tx) => {
-                                let parse_time = parse_s.elapsed().as_nanos() as u64;
-                                let logic_s = Instant::now();
+            tokio::spawn(async move {
+                let _permit = _permit;
 
-                                if let Err(e) = handle_tx_notification(tx, redis).await {
-                                    warn!(error = %e, "Txn handler failed");
-                                }
+                let parse_s = Instant::now();
+                match parse_json::<TxNotification>(txt) {
+                    Ok(tx) => {
+                        let parse_time = parse_s.elapsed().as_nanos() as u64;
+                        let logic_s = Instant::now();
 
-                                let logic_time = logic_s.elapsed().as_nanos() as u64;
-                                metrics.observe(wait_time, parse_time, logic_time);
-                            }
-                            Err(e) => {
-                                error!(error = %e.root_cause(), "Failed to parse JSON message");
-                            }
+                        if let Err(e) = handle_tx_notification(tx, redis).await {
+                            warn!(error = %e, "Txn handler failed");
                         }
-                        // permit drops here
-                    });
-                }
-            })
-        })
-        .expect("Failed to spawn app-dispatcher thread");
 
-    // Connection loop with backoff - Dedicated thread
-    let _connector_thread = std::thread::Builder::new()
-        .name("ws-connector".into())
-        .spawn(move || {
-            handle_for_connector.block_on(async move {
-                let mut backoff_ms = 500u64;
-                loop {
-                    match connect_once(&config, &parsed_tx).await {
-                        Ok(_) => {
-                            // Normal close — reset backoff
-                            backoff_ms = 500;
-                        }
-                        Err(err) => {
-                            error!(error = %err, "WS connection failed");
-                            sleep(Duration::from_millis(backoff_ms)).await;
-                            backoff_ms = (backoff_ms * 2).min(30_000);
-                        }
+                        let logic_time = logic_s.elapsed().as_nanos() as u64;
+                        metrics.observe(wait_time, parse_time, logic_time);
+                    }
+                    Err(e) => {
+                        error!(error = %e.root_cause(), "Failed to parse JSON message");
                     }
                 }
-            })
-        })
-        .expect("Failed to spawn ws-connector thread");
+                // permit drops here
+            });
+        }
+    });
 
-    // Keep the main 'run' future alive as long as we want the app to run.
-    // Since we spawned everything into dedicated threads, we just wait here.
-    futures_util::future::pending::<()>().await;
+    // Connection loop with backoff
+    let mut backoff_ms = 500u64;
+    loop {
+        match connect_once(&config, &parsed_tx).await {
+            Ok(_) => {
+                // Normal close — reset backoff
+                backoff_ms = 500;
+            }
+            Err(err) => {
+                error!(error = %err, "WS connection failed");
+                sleep(Duration::from_millis(backoff_ms)).await;
+                backoff_ms = (backoff_ms * 2).min(30_000);
+            }
+        }
+    }
     Ok(())
 }
 
@@ -140,27 +123,21 @@ async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<(String, Instant
         w.send(Message::Text(subscribe)).await?;
     }
 
-    // Ping task - Dedicated thread
+    // Ping task
     let ping_secs = config.ping_secs;
-    let handle = tokio::runtime::Handle::current();
     let write_for_ping = write.clone();
-    let _ping_thread = std::thread::Builder::new()
-        .name("ws-pinger".into())
-        .spawn(move || {
-            handle.block_on(async move {
-                let mut interval = tokio::time::interval(Duration::from_secs(ping_secs));
-                loop {
-                    interval.tick().await;
-                    debug!("ping");
-                    let mut w = write_for_ping.lock().await;
-                    if let Err(e) = w.send(Message::Ping(Vec::new())).await {
-                        error!(error = %e, "Ping failed; ending ping task");
-                        break;
-                    }
-                }
-            })
-        })
-        .expect("Failed to spawn ws-pinger thread");
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(ping_secs));
+        loop {
+            interval.tick().await;
+            debug!("ping");
+            let mut w = write_for_ping.lock().await;
+            if let Err(e) = w.send(Message::Ping(Vec::new())).await {
+                error!(error = %e, "Ping failed; ending ping task");
+                break;
+            }
+        }
+    });
 
     // Reader loop
     while let Some(msg) = read.next().await {
@@ -216,6 +193,7 @@ fn build_transaction_subscribe(cfg: &Config) -> String {
         "vote": cfg.include_votes,
         "failed": cfg.include_failed,
         "accountInclude": cfg.accounts,
+        "accountExclude": cfg.excluded_accounts,
     });
     let options = serde_json::json!({
         "commitment": cfg.commitment.as_str(),

@@ -778,6 +778,14 @@
         {
           "name": "max_sol_cost",
           "type": "u64"
+        },
+        {
+          "name": "track_volume",
+          "type": {
+            "defined": {
+              "name": "OptionBool"
+            }
+          }
         }
       ]
     },
@@ -1151,6 +1159,14 @@
         {
           "name": "min_tokens_out",
           "type": "u64"
+        },
+        {
+          "name": "track_volume",
+          "type": {
+            "defined": {
+              "name": "OptionBool"
+            }
+          }
         }
       ]
     },

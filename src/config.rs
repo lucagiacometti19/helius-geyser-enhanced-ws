@@ -5,7 +5,8 @@ use std::env;
 pub struct Config {
     pub ws_url: String,
     pub api_key: String,
-    pub accounts: Vec<String>, // subscribe filter (OR semantics)
+    pub accounts: Vec<String>,          // subscribe filter (OR semantics)
+    pub excluded_accounts: Vec<String>, // exclude filter (OR semantics)
     pub commitment: Commitment,
     pub include_failed: bool,
     pub include_votes: bool,
@@ -52,6 +53,14 @@ impl Config {
             );
         }
 
+        // Excluded accounts
+        let excluded_accounts = env::var("EXCLUDED_ACCOUNTS")
+            .unwrap_or_default()
+            .split(',')
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.trim().to_string())
+            .collect::<Vec<_>>();
+
         let commitment = match env::var("COMMITMENT")
             .unwrap_or("processed".to_string())
             .as_str()
@@ -64,7 +73,6 @@ impl Config {
 
         // default to false
         let t = matches!(env::var("INCLUDE_FAILED").as_deref(), Ok("1") | Ok("true"));
-        dbg!(t);
         let include_failed = t;
         let include_votes = matches!(env::var("INCLUDE_VOTES").as_deref(), Ok("1") | Ok("true"));
 
@@ -81,6 +89,7 @@ impl Config {
             ws_url,
             api_key,
             accounts,
+            excluded_accounts,
             commitment,
             include_failed,
             include_votes,
