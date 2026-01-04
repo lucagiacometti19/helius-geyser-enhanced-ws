@@ -92,7 +92,7 @@ pub async fn run(config: Config) -> Result<()> {
             }
         }
     }
-    Ok(())
+    // Ok(())
 }
 
 async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<(String, Instant)>) -> Result<()> {
@@ -126,7 +126,7 @@ async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<(String, Instant
     // Ping task
     let ping_secs = config.ping_secs;
     let write_for_ping = write.clone();
-    tokio::spawn(async move {
+    let ping_task = tokio::spawn(async move {
         let mut interval = tokio::time::interval(Duration::from_secs(ping_secs));
         loop {
             interval.tick().await;
@@ -180,7 +180,8 @@ async fn connect_once(config: &Config, parsed_tx: &mpsc::Sender<(String, Instant
         }
     }
 
-    // @todo: stop ping and try to close nicely
+    // stop ping and try to close nicely
+    ping_task.abort();
     if let Ok(mut w) = write.try_lock() {
         let _ = w.send(Message::Close(None)).await;
     }
