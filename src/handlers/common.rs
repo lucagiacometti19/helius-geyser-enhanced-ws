@@ -1,5 +1,6 @@
 use crate::model::{IntoTransactionStatusMeta, TxNotification};
 use anyhow::{Context, Result};
+use serde::Serialize;
 use solana_message::SimpleAddressLoader;
 use solana_message::v0::LoadedAddresses;
 use solana_pubkey::Pubkey;
@@ -7,19 +8,24 @@ use solana_transaction::sanitized::{MessageHash, SanitizedTransaction};
 use std::collections::HashSet;
 use std::str::FromStr;
 use yellowstone_grpc_proto::convert_to;
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, Serialize)]
 pub enum PlatformActivity {
     Buy {
-        amount: u64,
+        amount: u64, // Actual SOL executed
         mint: String,
         ix_name: String,
         slippage_percent: Option<f64>,
+        limit_amount: u64, // max_sol (Standard Buy) or min_tokens (BuyExactSolIn)
+        requested_amount: u64, // requested_tokens (Standard Buy) or spendable_sol (BuyExactSolIn)
     },
     Sell {
-        amount: u64,
+        amount: u64, // Actual SOL executed
         mint: String,
         ix_name: String,
         slippage_percent: Option<f64>,
+        requested_token_amount: u64,
+        limit_sol_amount: u64,
     },
     Other {
         ix_name: String,
@@ -27,7 +33,9 @@ pub enum PlatformActivity {
     },
 }
 
+#[derive(Serialize)]
 pub struct TxLabels {
+    pub signature: String,
     pub fee_payer: String,
     /// for some reason, setting failed = true in the config
     /// seems to be interpreted by Helius geyser websocket as
@@ -151,6 +159,7 @@ pub fn extract_labels(tx: &TxNotification) -> Result<(TxLabels, SanitizedTransac
 
     Ok((
         TxLabels {
+            signature: tx_signature.to_string(),
             fee_payer,
             success,
             priority_fee,

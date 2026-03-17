@@ -33,6 +33,10 @@ message BuyExactSolInIx {
 	BuyExactSolInIxData data = 2;
 }
 
+message ClaimCashbackIx {
+	ClaimCashbackIxAccounts accounts = 1;
+}
+
 message ClaimTokenIncentivesIx {
 	ClaimTokenIncentivesIxAccounts accounts = 1;
 }
@@ -55,8 +59,16 @@ message CreateV2Ix {
 	CreateV2IxData data = 2;
 }
 
+message DistributeCreatorFeesIx {
+	DistributeCreatorFeesIxAccounts accounts = 1;
+}
+
 message ExtendAccountIx {
 	ExtendAccountIxAccounts accounts = 1;
+}
+
+message GetMinimumDistributableFeeIx {
+	GetMinimumDistributableFeeIxAccounts accounts = 1;
 }
 
 message InitUserVolumeAccumulatorIx {
@@ -71,6 +83,10 @@ message MigrateIx {
 	MigrateIxAccounts accounts = 1;
 }
 
+message MigrateBondingCurveCreatorIx {
+	MigrateBondingCurveCreatorIxAccounts accounts = 1;
+}
+
 message SellIx {
 	SellIxAccounts accounts = 1;
 	SellIxData data = 2;
@@ -79,6 +95,10 @@ message SellIx {
 message SetCreatorIx {
 	SetCreatorIxAccounts accounts = 1;
 	SetCreatorIxData data = 2;
+}
+
+message SetMayhemVirtualParamsIx {
+	SetMayhemVirtualParamsIxAccounts accounts = 1;
 }
 
 message SetMetaplexCreatorIx {
@@ -97,6 +117,11 @@ message SetReservedFeeRecipientsIx {
 
 message SyncUserVolumeAccumulatorIx {
 	SyncUserVolumeAccumulatorIxAccounts accounts = 1;
+}
+
+message ToggleCashbackEnabledIx {
+	ToggleCashbackEnabledIxAccounts accounts = 1;
+	ToggleCashbackEnabledIxData data = 2;
 }
 
 message ToggleCreateV2Ix {
@@ -135,6 +160,14 @@ message AdminUpdateTokenIncentivesEvent {
 	string mint = 5;
 	int64 seconds_in_a_day = 6;
 	int64 timestamp = 7;
+}
+
+message ClaimCashbackEvent {
+	string user = 1;
+	uint64 amount = 2;
+	int64 timestamp = 3;
+	uint64 total_claimed = 4;
+	uint64 total_cashback_earned = 5;
 }
 
 message ClaimTokenIncentivesEvent {
@@ -179,6 +212,11 @@ message CompletePumpAmmMigrationEvent {
 	string pool = 8;
 }
 
+enum ConfigStatus {
+	ConfigStatusPaused = 0;
+	ConfigStatusActive = 1;
+}
+
 message CreateEvent {
 	string name = 1;
 	string symbol = 2;
@@ -194,6 +232,17 @@ message CreateEvent {
 	uint64 token_total_supply = 12;
 	string token_program = 13;
 	bool is_mayhem_mode = 14;
+	bool is_cashback_enabled = 15;
+}
+
+message DistributeCreatorFeesEvent {
+	int64 timestamp = 1;
+	string mint = 2;
+	string bonding_curve = 3;
+	string sharing_config = 4;
+	string admin = 5;
+	repeated Shareholder shareholders = 6;
+	uint64 distributed = 7;
 }
 
 message ExtendAccountEvent {
@@ -219,6 +268,21 @@ message InitUserVolumeAccumulatorEvent {
 	string payer = 1;
 	string user = 2;
 	int64 timestamp = 3;
+}
+
+message MigrateBondingCurveCreatorEvent {
+	int64 timestamp = 1;
+	string mint = 2;
+	string bonding_curve = 3;
+	string sharing_config = 4;
+	string old_creator = 5;
+	string new_creator = 6;
+}
+
+message MinimumDistributableFeeEvent {
+	uint64 minimum_required = 1;
+	uint64 distributable_fees = 2;
+	bool can_distribute = 3;
 }
 
 message OptionBool {
@@ -263,6 +327,11 @@ message SetParamsEvent {
 	string admin_set_creator_authority = 14;
 }
 
+message Shareholder {
+	string address = 1;
+	uint32 share_bps = 2;
+}
+
 message SyncUserVolumeAccumulatorEvent {
 	string user = 1;
 	uint64 total_claimed_tokens_before = 2;
@@ -293,6 +362,9 @@ message TradeEvent {
 	uint64 current_sol_volume = 20;
 	int64 last_update_timestamp = 21;
 	string ix_name = 22;
+	bool mayhem_mode = 23;
+	uint64 cashback_fee_basis_points = 24;
+	uint64 cashback = 25;
 }
 
 message UpdateGlobalAuthorityEvent {
@@ -300,6 +372,17 @@ message UpdateGlobalAuthorityEvent {
 	string authority = 2;
 	string new_authority = 3;
 	int64 timestamp = 4;
+}
+
+message UpdateMayhemVirtualParamsEvent {
+	int64 timestamp = 1;
+	string mint = 2;
+	uint64 virtual_token_reserves = 3;
+	uint64 virtual_sol_reserves = 4;
+	uint64 new_virtual_token_reserves = 5;
+	uint64 new_virtual_sol_reserves = 6;
+	uint64 real_token_reserves = 7;
+	uint64 real_sol_reserves = 8;
 }
 
 
@@ -312,6 +395,7 @@ message BondingCurve {
 	bool complete = 6;
 	string creator = 7;
 	bool is_mayhem_mode = 8;
+	bool is_cashback_coin = 9;
 }
 
 message FeeConfig {
@@ -342,6 +426,7 @@ message Global {
 	string reserved_fee_recipient = 18;
 	bool mayhem_mode_enabled = 19;
 	repeated string reserved_fee_recipients = 20;
+	bool is_cashback_enabled = 21;
 }
 
 message GlobalVolumeAccumulator {
@@ -353,6 +438,16 @@ message GlobalVolumeAccumulator {
 	repeated uint64 sol_volumes = 6;
 }
 
+message SharingConfig {
+	uint32 bump = 1;
+	uint32 version = 2;
+	ConfigStatus status = 3;
+	string mint = 4;
+	string admin = 5;
+	bool admin_revoked = 6;
+	repeated Shareholder shareholders = 7;
+}
+
 message UserVolumeAccumulator {
 	string user = 1;
 	bool needs_claim = 2;
@@ -361,6 +456,8 @@ message UserVolumeAccumulator {
 	uint64 current_sol_volume = 5;
 	int64 last_update_timestamp = 6;
 	bool has_total_claimed_tokens = 7;
+	uint64 cashback_earned = 8;
+	uint64 total_cashback_claimed = 9;
 }
 
 
@@ -462,6 +559,15 @@ message BuyExactSolInIxData {
 	OptionBool track_volume = 3;
 }
 
+message ClaimCashbackIxAccounts {
+	string user = 1;
+	string user_volume_accumulator = 2;
+	string system_program = 3;
+	string event_authority = 4;
+	string program = 5;
+}
+
+
 message ClaimTokenIncentivesIxAccounts {
 	string user = 1;
 	string user_ata = 2;
@@ -544,7 +650,19 @@ message CreateV2IxData {
 	string uri = 3;
 	string creator = 4;
 	bool is_mayhem_mode = 5;
+	OptionBool is_cashback_enabled = 6;
 }
+
+message DistributeCreatorFeesIxAccounts {
+	string mint = 1;
+	string bonding_curve = 2;
+	string sharing_config = 3;
+	string creator_vault = 4;
+	string system_program = 5;
+	string event_authority = 6;
+	string program = 7;
+}
+
 
 message ExtendAccountIxAccounts {
 	string account = 1;
@@ -552,6 +670,14 @@ message ExtendAccountIxAccounts {
 	string system_program = 3;
 	string event_authority = 4;
 	string program = 5;
+}
+
+
+message GetMinimumDistributableFeeIxAccounts {
+	string mint = 1;
+	string bonding_curve = 2;
+	string sharing_config = 3;
+	string creator_vault = 4;
 }
 
 
@@ -600,6 +726,15 @@ message MigrateIxAccounts {
 }
 
 
+message MigrateBondingCurveCreatorIxAccounts {
+	string mint = 1;
+	string bonding_curve = 2;
+	string sharing_config = 3;
+	string event_authority = 4;
+	string program = 5;
+}
+
+
 message SellIxAccounts {
 	string global = 1;
 	string fee_recipient = 2;
@@ -635,6 +770,18 @@ message SetCreatorIxAccounts {
 message SetCreatorIxData {
 	string creator = 1;
 }
+
+message SetMayhemVirtualParamsIxAccounts {
+	string sol_vault_authority = 1;
+	string mayhem_token_vault = 2;
+	string mint = 3;
+	string global = 4;
+	string bonding_curve = 5;
+	string token_program = 6;
+	string event_authority = 7;
+	string program = 8;
+}
+
 
 message SetMetaplexCreatorIxAccounts {
 	string mint = 1;
@@ -686,6 +833,17 @@ message SyncUserVolumeAccumulatorIxAccounts {
 }
 
 
+message ToggleCashbackEnabledIxAccounts {
+	string global = 1;
+	string authority = 2;
+	string event_authority = 3;
+	string program = 4;
+}
+
+message ToggleCashbackEnabledIxData {
+	bool enabled = 1;
+}
+
 message ToggleCreateV2IxAccounts {
 	string global = 1;
 	string authority = 2;
@@ -724,7 +882,8 @@ message ProgramState {
         	FeeConfig fee_config = 2;
         	Global global = 3;
         	GlobalVolumeAccumulator global_volume_accumulator = 4;
-        	UserVolumeAccumulator user_volume_accumulator = 5;
+        	SharingConfig sharing_config = 5;
+        	UserVolumeAccumulator user_volume_accumulator = 6;
         }
 }
 
@@ -735,24 +894,30 @@ message ProgramIxs {
         	AdminUpdateTokenIncentivesIx admin_update_token_incentives = 3;
         	BuyIx buy = 4;
         	BuyExactSolInIx buy_exact_sol_in = 5;
-        	ClaimTokenIncentivesIx claim_token_incentives = 6;
-        	CloseUserVolumeAccumulatorIx close_user_volume_accumulator = 7;
-        	CollectCreatorFeeIx collect_creator_fee = 8;
-        	CreateIx create = 9;
-        	CreateV2Ix create_v2 = 10;
-        	ExtendAccountIx extend_account = 11;
-        	InitUserVolumeAccumulatorIx init_user_volume_accumulator = 12;
-        	InitializeIx initialize = 13;
-        	MigrateIx migrate = 14;
-        	SellIx sell = 15;
-        	SetCreatorIx set_creator = 16;
-        	SetMetaplexCreatorIx set_metaplex_creator = 17;
-        	SetParamsIx set_params = 18;
-        	SetReservedFeeRecipientsIx set_reserved_fee_recipients = 19;
-        	SyncUserVolumeAccumulatorIx sync_user_volume_accumulator = 20;
-        	ToggleCreateV2Ix toggle_create_v2 = 21;
-        	ToggleMayhemModeIx toggle_mayhem_mode = 22;
-        	UpdateGlobalAuthorityIx update_global_authority = 23;
+        	ClaimCashbackIx claim_cashback = 6;
+        	ClaimTokenIncentivesIx claim_token_incentives = 7;
+        	CloseUserVolumeAccumulatorIx close_user_volume_accumulator = 8;
+        	CollectCreatorFeeIx collect_creator_fee = 9;
+        	CreateIx create = 10;
+        	CreateV2Ix create_v2 = 11;
+        	DistributeCreatorFeesIx distribute_creator_fees = 12;
+        	ExtendAccountIx extend_account = 13;
+        	GetMinimumDistributableFeeIx get_minimum_distributable_fee = 14;
+        	InitUserVolumeAccumulatorIx init_user_volume_accumulator = 15;
+        	InitializeIx initialize = 16;
+        	MigrateIx migrate = 17;
+        	MigrateBondingCurveCreatorIx migrate_bonding_curve_creator = 18;
+        	SellIx sell = 19;
+        	SetCreatorIx set_creator = 20;
+        	SetMayhemVirtualParamsIx set_mayhem_virtual_params = 21;
+        	SetMetaplexCreatorIx set_metaplex_creator = 22;
+        	SetParamsIx set_params = 23;
+        	SetReservedFeeRecipientsIx set_reserved_fee_recipients = 24;
+        	SyncUserVolumeAccumulatorIx sync_user_volume_accumulator = 25;
+        	ToggleCashbackEnabledIx toggle_cashback_enabled = 26;
+        	ToggleCreateV2Ix toggle_create_v2 = 27;
+        	ToggleMayhemModeIx toggle_mayhem_mode = 28;
+        	UpdateGlobalAuthorityIx update_global_authority = 29;
         }
 }
 

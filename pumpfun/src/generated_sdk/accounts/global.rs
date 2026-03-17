@@ -43,13 +43,14 @@ pub whitelist_pda: Pubkey,
 pub reserved_fee_recipient: Pubkey,
 pub mayhem_mode_enabled: bool,
 pub reserved_fee_recipients: [Pubkey; 7],
+pub is_cashback_enabled: bool,
 }
 
 
 pub const GLOBAL_DISCRIMINATOR: [u8; 8] = [167, 232, 232, 177, 200, 108, 114, 127];
 
 impl Global {
-      pub const LEN: usize = 740;
+      pub const LEN: usize = 741;
   
   
   

@@ -5,32 +5,32 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+use crate::generated::types::ConfigStatus;
 use solana_pubkey::Pubkey;
+use crate::generated::types::Shareholder;
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BondingCurve {
+pub struct SharingConfig {
 pub discriminator: [u8; 8],
-pub virtual_token_reserves: u64,
-pub virtual_sol_reserves: u64,
-pub real_token_reserves: u64,
-pub real_sol_reserves: u64,
-pub token_total_supply: u64,
-pub complete: bool,
+pub bump: u8,
+pub version: u8,
+pub status: ConfigStatus,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub creator: Pubkey,
-pub is_mayhem_mode: bool,
-pub is_cashback_coin: bool,
+pub mint: Pubkey,
+#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
+pub admin: Pubkey,
+pub admin_revoked: bool,
+pub shareholders: Vec<Shareholder>,
 }
 
 
-pub const BONDING_CURVE_DISCRIMINATOR: [u8; 8] = [23, 183, 248, 55, 96, 216, 172, 96];
+pub const SHARING_CONFIG_DISCRIMINATOR: [u8; 8] = [216, 74, 9, 0, 56, 140, 93, 75];
 
-impl BondingCurve {
-      pub const LEN: usize = 83;
+impl SharingConfig {
   
   
   
@@ -41,7 +41,7 @@ impl BondingCurve {
   }
 }
 
-impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for BondingCurve {
+impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for SharingConfig {
   type Error = std::io::Error;
 
   fn try_from(account_info: &solana_account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
@@ -51,53 +51,53 @@ impl<'a> TryFrom<&solana_account_info::AccountInfo<'a>> for BondingCurve {
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_bonding_curve(
+pub fn fetch_sharing_config(
   rpc: &solana_client::rpc_client::RpcClient,
   address: &solana_pubkey::Pubkey,
-) -> Result<crate::shared::DecodedAccount<BondingCurve>, std::io::Error> {
-  let accounts = fetch_all_bonding_curve(rpc, &[*address])?;
+) -> Result<crate::shared::DecodedAccount<SharingConfig>, std::io::Error> {
+  let accounts = fetch_all_sharing_config(rpc, &[*address])?;
   Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_bonding_curve(
+pub fn fetch_all_sharing_config(
   rpc: &solana_client::rpc_client::RpcClient,
   addresses: &[solana_pubkey::Pubkey],
-) -> Result<Vec<crate::shared::DecodedAccount<BondingCurve>>, std::io::Error> {
+) -> Result<Vec<crate::shared::DecodedAccount<SharingConfig>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)
       .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<BondingCurve>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<SharingConfig>> = Vec::new();
     for i in 0..addresses.len() {
       let address = addresses[i];
       let account = accounts[i].as_ref()
         .ok_or(std::io::Error::new(std::io::ErrorKind::Other, format!("Account not found: {}", address)))?;
-      let data = BondingCurve::from_bytes(&account.data)?;
+      let data = SharingConfig::from_bytes(&account.data)?;
       decoded_accounts.push(crate::shared::DecodedAccount { address, account: account.clone(), data });
     }
     Ok(decoded_accounts)
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_maybe_bonding_curve(
+pub fn fetch_maybe_sharing_config(
   rpc: &solana_client::rpc_client::RpcClient,
   address: &solana_pubkey::Pubkey,
-) -> Result<crate::shared::MaybeAccount<BondingCurve>, std::io::Error> {
-    let accounts = fetch_all_maybe_bonding_curve(rpc, &[*address])?;
+) -> Result<crate::shared::MaybeAccount<SharingConfig>, std::io::Error> {
+    let accounts = fetch_all_maybe_sharing_config(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_maybe_bonding_curve(
+pub fn fetch_all_maybe_sharing_config(
   rpc: &solana_client::rpc_client::RpcClient,
   addresses: &[solana_pubkey::Pubkey],
-) -> Result<Vec<crate::shared::MaybeAccount<BondingCurve>>, std::io::Error> {
+) -> Result<Vec<crate::shared::MaybeAccount<SharingConfig>>, std::io::Error> {
     let accounts = rpc.get_multiple_accounts(addresses)
       .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<BondingCurve>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<SharingConfig>> = Vec::new();
     for i in 0..addresses.len() {
       let address = addresses[i];
       if let Some(account) = accounts[i].as_ref() {
-        let data = BondingCurve::from_bytes(&account.data)?;
+        let data = SharingConfig::from_bytes(&account.data)?;
         decoded_accounts.push(crate::shared::MaybeAccount::Exists(crate::shared::DecodedAccount { address, account: account.clone(), data }));
       } else {
         decoded_accounts.push(crate::shared::MaybeAccount::NotFound(address));
@@ -107,28 +107,28 @@ pub fn fetch_all_maybe_bonding_curve(
 }
 
   #[cfg(feature = "anchor")]
-  impl anchor_lang::AccountDeserialize for BondingCurve {
+  impl anchor_lang::AccountDeserialize for SharingConfig {
       fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
       }
   }
 
   #[cfg(feature = "anchor")]
-  impl anchor_lang::AccountSerialize for BondingCurve {}
+  impl anchor_lang::AccountSerialize for SharingConfig {}
 
   #[cfg(feature = "anchor")]
-  impl anchor_lang::Owner for BondingCurve {
+  impl anchor_lang::Owner for SharingConfig {
       fn owner() -> Pubkey {
         crate::PUMP_ID
       }
   }
 
   #[cfg(feature = "anchor-idl-build")]
-  impl anchor_lang::IdlBuild for BondingCurve {}
+  impl anchor_lang::IdlBuild for SharingConfig {}
 
   
   #[cfg(feature = "anchor-idl-build")]
-  impl anchor_lang::Discriminator for BondingCurve {
+  impl anchor_lang::Discriminator for SharingConfig {
     const DISCRIMINATOR: &[u8] = &[0; 8];
   }
 

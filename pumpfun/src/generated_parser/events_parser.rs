@@ -13,14 +13,18 @@ pub enum PumpProgramEvent {
     AdminSetCreatorEvent(AdminSetCreatorEvent),
     AdminSetIdlAuthorityEvent(AdminSetIdlAuthorityEvent),
     AdminUpdateTokenIncentivesEvent(AdminUpdateTokenIncentivesEvent),
+    ClaimCashbackEvent(ClaimCashbackEvent),
     ClaimTokenIncentivesEvent(ClaimTokenIncentivesEvent),
     CloseUserVolumeAccumulatorEvent(CloseUserVolumeAccumulatorEvent),
     CollectCreatorFeeEvent(CollectCreatorFeeEvent),
     CompleteEvent(CompleteEvent),
     CompletePumpAmmMigrationEvent(CompletePumpAmmMigrationEvent),
     CreateEvent(CreateEvent),
+    DistributeCreatorFeesEvent(DistributeCreatorFeesEvent),
     ExtendAccountEvent(ExtendAccountEvent),
     InitUserVolumeAccumulatorEvent(InitUserVolumeAccumulatorEvent),
+    MigrateBondingCurveCreatorEvent(MigrateBondingCurveCreatorEvent),
+    MinimumDistributableFeeEvent(MinimumDistributableFeeEvent),
     ReservedFeeRecipientsEvent(ReservedFeeRecipientsEvent),
     SetCreatorEvent(SetCreatorEvent),
     SetMetaplexCreatorEvent(SetMetaplexCreatorEvent),
@@ -28,6 +32,7 @@ pub enum PumpProgramEvent {
     SyncUserVolumeAccumulatorEvent(SyncUserVolumeAccumulatorEvent),
     TradeEvent(TradeEvent),
     UpdateGlobalAuthorityEvent(UpdateGlobalAuthorityEvent),
+    UpdateMayhemVirtualParamsEvent(UpdateMayhemVirtualParamsEvent),
 }
 
 impl PumpProgramEvent {
@@ -46,6 +51,10 @@ impl PumpProgramEvent {
             [147, 250, 108, 120, 247, 29, 67, 222] => {
                 let event = deserialize_checked(data, discriminator)?;
                 Ok(Some(PumpProgramEvent::AdminUpdateTokenIncentivesEvent(event)))
+            }
+            [226, 214, 246, 33, 7, 242, 147, 229] => {
+                let event = deserialize_checked(data, discriminator)?;
+                Ok(Some(PumpProgramEvent::ClaimCashbackEvent(event)))
             }
             [79, 172, 246, 49, 205, 91, 206, 232] => {
                 let event = deserialize_checked(data, discriminator)?;
@@ -71,6 +80,10 @@ impl PumpProgramEvent {
                 let event = deserialize_checked(data, discriminator)?;
                 Ok(Some(PumpProgramEvent::CreateEvent(event)))
             }
+            [165, 55, 129, 112, 4, 179, 202, 40] => {
+                let event = deserialize_checked(data, discriminator)?;
+                Ok(Some(PumpProgramEvent::DistributeCreatorFeesEvent(event)))
+            }
             [97, 97, 215, 144, 93, 146, 22, 124] => {
                 let event = deserialize_checked(data, discriminator)?;
                 Ok(Some(PumpProgramEvent::ExtendAccountEvent(event)))
@@ -78,6 +91,14 @@ impl PumpProgramEvent {
             [134, 36, 13, 72, 232, 101, 130, 216] => {
                 let event = deserialize_checked(data, discriminator)?;
                 Ok(Some(PumpProgramEvent::InitUserVolumeAccumulatorEvent(event)))
+            }
+            [155, 167, 104, 220, 213, 108, 243, 3] => {
+                let event = deserialize_checked(data, discriminator)?;
+                Ok(Some(PumpProgramEvent::MigrateBondingCurveCreatorEvent(event)))
+            }
+            [168, 216, 132, 239, 235, 182, 49, 52] => {
+                let event = deserialize_checked(data, discriminator)?;
+                Ok(Some(PumpProgramEvent::MinimumDistributableFeeEvent(event)))
             }
             [43, 188, 250, 18, 221, 75, 187, 95] => {
                 let event = deserialize_checked(data, discriminator)?;
@@ -106,6 +127,10 @@ impl PumpProgramEvent {
             [182, 195, 137, 42, 35, 206, 207, 247] => {
                 let event = deserialize_checked(data, discriminator)?;
                 Ok(Some(PumpProgramEvent::UpdateGlobalAuthorityEvent(event)))
+            }
+            [117, 123, 228, 182, 161, 168, 220, 214] => {
+                let event = deserialize_checked(data, discriminator)?;
+                Ok(Some(PumpProgramEvent::UpdateMayhemVirtualParamsEvent(event)))
             }
             _ => Ok(None),
         }

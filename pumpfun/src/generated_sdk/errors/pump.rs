@@ -157,6 +157,30 @@ pub enum PumpError {
     /// 6048 - 
     #[error("")]
     MayhemModeDisabled = 0x17A0,
+    /// 6049 - creator has been migrated to sharing config, use pump_fees::reset_fee_sharing_config instead
+    #[error("creator has been migrated to sharing config, use pump_fees::reset_fee_sharing_config instead")]
+    CreatorMigratedToSharingConfig = 0x17A1,
+    /// 6050 - creator_vault has been migrated to sharing config, use pump:distribute_creator_fees instead
+    #[error("creator_vault has been migrated to sharing config, use pump:distribute_creator_fees instead")]
+    UnableToDistributeCreatorVaultMigratedToSharingConfig = 0x17A2,
+    /// 6051 - Sharing config is not active
+    #[error("Sharing config is not active")]
+    SharingConfigNotActive = 0x17A3,
+    /// 6052 - The recipient account is executable, so it cannot receive lamports, remove it from the team first
+    #[error("The recipient account is executable, so it cannot receive lamports, remove it from the team first")]
+    UnableToDistributeCreatorFeesToExecutableRecipient = 0x17A4,
+    /// 6053 - Bonding curve creator does not match sharing config
+    #[error("Bonding curve creator does not match sharing config")]
+    BondingCurveAndSharingConfigCreatorMismatch = 0x17A5,
+    /// 6054 - Remaining accounts do not match shareholders, make sure to pass exactly the same pubkeys in the same order
+    #[error("Remaining accounts do not match shareholders, make sure to pass exactly the same pubkeys in the same order")]
+    ShareholdersAndRemainingAccountsMismatch = 0x17A6,
+    /// 6055 - Share bps must be greater than 0
+    #[error("Share bps must be greater than 0")]
+    InvalidShareBps = 0x17A7,
+    /// 6056 - Cashback is not enabled
+    #[error("Cashback is not enabled")]
+    CashbackNotEnabled = 0x17A8,
 }
 
 impl From<PumpError> for solana_program_error::ProgramError {

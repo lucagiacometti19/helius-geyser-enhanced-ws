@@ -9,6 +9,7 @@ use crate::accounts::BondingCurve;
 use crate::accounts::FeeConfig;
 use crate::accounts::Global;
 use crate::accounts::GlobalVolumeAccumulator;
+use crate::accounts::SharingConfig;
 use crate::accounts::UserVolumeAccumulator;
 use crate::ID;
 
@@ -23,6 +24,7 @@ pub enum PumpProgramState {
             FeeConfig(FeeConfig),
             Global(Global),
             GlobalVolumeAccumulator(GlobalVolumeAccumulator),
+            SharingConfig(SharingConfig),
             UserVolumeAccumulator(UserVolumeAccumulator),
     }
 
@@ -47,6 +49,11 @@ impl PumpProgramState {
                     ),
                                                                 [202, 42, 246, 43, 142, 190, 30, 255] => Ok(
                         PumpProgramState::GlobalVolumeAccumulator(
+                            deserialize_checked(data_bytes, &acc_discriminator)?
+                        )
+                    ),
+                                                                [216, 74, 9, 0, 56, 140, 93, 75] => Ok(
+                        PumpProgramState::SharingConfig(
                             deserialize_checked(data_bytes, &acc_discriminator)?
                         )
                     ),
@@ -153,6 +160,7 @@ mod proto_parser {
                                             complete: self.complete,
                                             creator: self.creator.to_string(),
                                             is_mayhem_mode: self.is_mayhem_mode,
+                                            is_cashback_coin: self.is_cashback_coin,
                                     }
             }
         }   
@@ -191,6 +199,7 @@ mod proto_parser {
                                             reserved_fee_recipient: self.reserved_fee_recipient.to_string(),
                                             mayhem_mode_enabled: self.mayhem_mode_enabled,
                                             reserved_fee_recipients: self.reserved_fee_recipients.into_iter().map(|x| x.to_string()).collect(),
+                                            is_cashback_enabled: self.is_cashback_enabled,
                                     }
             }
         }   
@@ -207,6 +216,20 @@ mod proto_parser {
                                     }
             }
         }   
+            use super::SharingConfig;
+        impl IntoProto<proto_def::SharingConfig> for SharingConfig {
+            fn into_proto(self) -> proto_def::SharingConfig {
+                proto_def::SharingConfig {
+                                            bump: self.bump.into(),
+                                            version: self.version.into(),
+                                            status: self.status as i32,
+                                            mint: self.mint.to_string(),
+                                            admin: self.admin.to_string(),
+                                            admin_revoked: self.admin_revoked,
+                                            shareholders: self.shareholders.into_iter().map(|x| x.into_proto()).collect(),
+                                    }
+            }
+        }   
             use super::UserVolumeAccumulator;
         impl IntoProto<proto_def::UserVolumeAccumulator> for UserVolumeAccumulator {
             fn into_proto(self) -> proto_def::UserVolumeAccumulator {
@@ -218,6 +241,8 @@ mod proto_parser {
                                             current_sol_volume: self.current_sol_volume,
                                             last_update_timestamp: self.last_update_timestamp,
                                             has_total_claimed_tokens: self.has_total_claimed_tokens,
+                                            cashback_earned: self.cashback_earned,
+                                            total_cashback_claimed: self.total_cashback_claimed,
                                     }
             }
         }   
@@ -229,6 +254,7 @@ mod proto_parser {
                                     PumpProgramState::FeeConfig(data) => proto_def::program_state::StateOneof::FeeConfig(data.into_proto()),
                                     PumpProgramState::Global(data) => proto_def::program_state::StateOneof::Global(data.into_proto()),
                                     PumpProgramState::GlobalVolumeAccumulator(data) => proto_def::program_state::StateOneof::GlobalVolumeAccumulator(data.into_proto()),
+                                    PumpProgramState::SharingConfig(data) => proto_def::program_state::StateOneof::SharingConfig(data.into_proto()),
                                     PumpProgramState::UserVolumeAccumulator(data) => proto_def::program_state::StateOneof::UserVolumeAccumulator(data.into_proto()),
                             };
 

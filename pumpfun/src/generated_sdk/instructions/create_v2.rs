@@ -6,6 +6,7 @@
 //!
 
 use solana_pubkey::Pubkey;
+use crate::generated::types::OptionBool;
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
@@ -153,13 +154,13 @@ impl CreateV2 {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
  pub struct CreateV2InstructionData {
             discriminator: [u8; 8],
-                                    }
+                                          }
 
 impl CreateV2InstructionData {
   pub fn new() -> Self {
     Self {
                         discriminator: [214, 144, 76, 236, 95, 139, 49, 180],
-                                                                                        }
+                                                                                                      }
   }
 
     pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
@@ -181,6 +182,7 @@ impl Default for CreateV2InstructionData {
                 pub uri: String,
                 pub creator: Pubkey,
                 pub is_mayhem_mode: bool,
+                pub is_cashback_enabled: OptionBool,
       }
 
 impl CreateV2InstructionArgs {
@@ -233,6 +235,7 @@ pub struct CreateV2Builder {
                 uri: Option<String>,
                 creator: Option<Pubkey>,
                 is_mayhem_mode: Option<bool>,
+                is_cashback_enabled: Option<OptionBool>,
         __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
@@ -349,6 +352,11 @@ impl CreateV2Builder {
         self.is_mayhem_mode = Some(is_mayhem_mode);
         self
       }
+                #[inline(always)]
+      pub fn is_cashback_enabled(&mut self, is_cashback_enabled: OptionBool) -> &mut Self {
+        self.is_cashback_enabled = Some(is_cashback_enabled);
+        self
+      }
         /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
@@ -387,6 +395,7 @@ impl CreateV2Builder {
                                                                   uri: self.uri.clone().expect("uri is not set"),
                                                                   creator: self.creator.clone().expect("creator is not set"),
                                                                   is_mayhem_mode: self.is_mayhem_mode.clone().expect("is_mayhem_mode is not set"),
+                                                                  is_cashback_enabled: self.is_cashback_enabled.clone().expect("is_cashback_enabled is not set"),
                                     };
     
     accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -707,6 +716,7 @@ impl<'a, 'b> CreateV2CpiBuilder<'a, 'b> {
                                 uri: None,
                                 creator: None,
                                 is_mayhem_mode: None,
+                                is_cashback_enabled: None,
                     __remaining_accounts: Vec::new(),
     });
     Self { instruction }
@@ -816,6 +826,11 @@ impl<'a, 'b> CreateV2CpiBuilder<'a, 'b> {
         self.instruction.is_mayhem_mode = Some(is_mayhem_mode);
         self
       }
+                #[inline(always)]
+      pub fn is_cashback_enabled(&mut self, is_cashback_enabled: OptionBool) -> &mut Self {
+        self.instruction.is_cashback_enabled = Some(is_cashback_enabled);
+        self
+      }
         /// Add an additional account to the instruction.
   #[inline(always)]
   pub fn add_remaining_account(&mut self, account: &'b solana_account_info::AccountInfo<'a>, is_writable: bool, is_signer: bool) -> &mut Self {
@@ -844,6 +859,7 @@ impl<'a, 'b> CreateV2CpiBuilder<'a, 'b> {
                                                                   uri: self.instruction.uri.clone().expect("uri is not set"),
                                                                   creator: self.instruction.creator.clone().expect("creator is not set"),
                                                                   is_mayhem_mode: self.instruction.is_mayhem_mode.clone().expect("is_mayhem_mode is not set"),
+                                                                  is_cashback_enabled: self.instruction.is_cashback_enabled.clone().expect("is_cashback_enabled is not set"),
                                     };
         let instruction = CreateV2Cpi {
         __program: self.instruction.__program,
@@ -909,6 +925,7 @@ struct CreateV2CpiBuilderInstruction<'a, 'b> {
                 uri: Option<String>,
                 creator: Option<Pubkey>,
                 is_mayhem_mode: Option<bool>,
+                is_cashback_enabled: Option<OptionBool>,
         /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
   __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

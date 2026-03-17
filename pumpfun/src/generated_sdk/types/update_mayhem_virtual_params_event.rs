@@ -11,27 +11,16 @@ use borsh::BorshDeserialize;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct CreateEvent {
-pub name: String,
-pub symbol: String,
-pub uri: String,
+pub struct UpdateMayhemVirtualParamsEvent {
+pub timestamp: i64,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
 pub mint: Pubkey,
-#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub bonding_curve: Pubkey,
-#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub user: Pubkey,
-#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub creator: Pubkey,
-pub timestamp: i64,
 pub virtual_token_reserves: u64,
 pub virtual_sol_reserves: u64,
+pub new_virtual_token_reserves: u64,
+pub new_virtual_sol_reserves: u64,
 pub real_token_reserves: u64,
-pub token_total_supply: u64,
-#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub token_program: Pubkey,
-pub is_mayhem_mode: bool,
-pub is_cashback_enabled: bool,
+pub real_sol_reserves: u64,
 }
 
 

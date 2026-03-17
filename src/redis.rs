@@ -2,7 +2,6 @@ use crate::handlers::common::{PlatformActivity, TxLabels};
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
-use tracing::warn;
 
 #[derive(Clone)]
 pub struct RedisManager {
@@ -17,6 +16,14 @@ impl RedisManager {
             .context("Failed to create Redis connection manager")?;
 
         Ok(Self { manager })
+    }
+
+    pub async fn save_transaction(&self, labels: &TxLabels) -> Result<()> {
+        let mut conn = self.manager.clone();
+        let json = serde_json::to_string(labels).context("Failed to serialize labels")?;
+        conn.hset::<_, _, _, ()>("transactions", &labels.signature, json)
+            .await?;
+        Ok(())
     }
 
     pub async fn update_stats(&self, labels: &TxLabels) -> Result<()> {
@@ -39,34 +46,48 @@ impl RedisManager {
         pipeline.atomic();
 
         pipeline.hincr(&key, "tx_count", 1);
-        pipeline.hincr(&key, "total_priority_fee", priority_fee as i64);
-        pipeline.hincr(&key, "total_cu", compute_units as i64);
 
-        if let Some(pf_sq) = priority_fee.checked_mul(priority_fee)
-            && pf_sq <= i64::MAX as u64
-        {
-            pipeline.hincr(&key, "total_sq_priority_fee", pf_sq as i64);
-        } else if priority_fee > 0 {
-            warn!(
-                "Priority fee squared overflow for wallet {} (priority_fee: {})",
-                wallet, priority_fee
-            );
-        }
+        // Normalize units for consistency and overflow prevention
+        // - Priority Fee: Lamports/CU (from micro-lamports/CU)
+        // - Compute Units: raw CU
+        // - Jito Tip: SOL (from lamports)
+        let pf_lam = priority_fee as f64 / 1_000_000.0;
+        let cu = compute_units as f64;
+        let tip_sol = jito_tip as f64 / 1_000_000_000.0;
 
-        if let Some(cu_sq) = compute_units.checked_mul(compute_units)
-            && cu_sq <= i64::MAX as u64
-        {
-            pipeline.hincr(&key, "total_sq_cu", cu_sq as i64);
-        } else {
-            warn!(
-                "Compute units squared overflow for wallet {} (compute_units: {})",
-                wallet, compute_units
-            );
-        }
+        // 1. Priority Fees (Lamports/CU)
+        pipeline
+            .cmd("HINCRBYFLOAT")
+            .arg(&key)
+            .arg("priority_fee_lam_sum")
+            .arg(pf_lam);
+        pipeline
+            .cmd("HINCRBYFLOAT")
+            .arg(&key)
+            .arg("priority_fee_lam_sum_sq")
+            .arg(pf_lam * pf_lam);
 
+        // 2. Compute Units
+        pipeline.cmd("HINCRBYFLOAT").arg(&key).arg("cu_sum").arg(cu);
+        pipeline
+            .cmd("HINCRBYFLOAT")
+            .arg(&key)
+            .arg("cu_sum_sq")
+            .arg(cu * cu);
+
+        // 3. Jito Tips (SOL)
         if jito_tip > 0 {
-            pipeline.hincr(&key, "total_jito_tip", jito_tip as i64);
             pipeline.hincr(&key, "tipped_tx_count", 1);
+            pipeline
+                .cmd("HINCRBYFLOAT")
+                .arg(&key)
+                .arg("jito_tip_sol_sum")
+                .arg(tip_sol);
+            pipeline
+                .cmd("HINCRBYFLOAT")
+                .arg(&key)
+                .arg("jito_tip_sol_sum_sq")
+                .arg(tip_sol * tip_sol);
         }
 
         if let Some(last_block) = last_block_val
@@ -83,12 +104,12 @@ impl RedisManager {
             pipeline
                 .cmd("HINCRBYFLOAT")
                 .arg(&key)
-                .arg("sum_time_diff_s")
+                .arg("time_diff_s_sum")
                 .arg(diff_s);
             pipeline
                 .cmd("HINCRBYFLOAT")
                 .arg(&key)
-                .arg("sum_sq_time_diff_s")
+                .arg("time_diff_s_sum_sq")
                 .arg(sq_diff_s);
         }
 
@@ -104,12 +125,14 @@ impl RedisManager {
                     mint,
                     ix_name,
                     slippage_percent,
+                    ..
                 }
                 | PlatformActivity::Sell {
                     amount,
                     mint,
                     ix_name,
                     slippage_percent,
+                    ..
                 } => {
                     let prefix = format!("ix:{}:", ix_name);
                     pipeline.hincr(&key, format!("{}count", prefix), 1);

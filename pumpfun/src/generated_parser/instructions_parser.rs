@@ -14,7 +14,7 @@ use yellowstone_vixen_core::InstructionUpdateOutput;
 use crate::deserialize_checked;
 
 use crate::ID;
-use crate::instructions::{AdminSetCreatorInstructionArgs as AdminSetCreatorIxData, AdminSetCreator as AdminSetCreatorIxAccounts, AdminSetIdlAuthorityInstructionArgs as AdminSetIdlAuthorityIxData, AdminSetIdlAuthority as AdminSetIdlAuthorityIxAccounts, AdminUpdateTokenIncentivesInstructionArgs as AdminUpdateTokenIncentivesIxData, AdminUpdateTokenIncentives as AdminUpdateTokenIncentivesIxAccounts, BuyInstructionArgs as BuyIxData, Buy as BuyIxAccounts, BuyExactSolInInstructionArgs as BuyExactSolInIxData, BuyExactSolIn as BuyExactSolInIxAccounts, ClaimTokenIncentives as ClaimTokenIncentivesIxAccounts, CloseUserVolumeAccumulator as CloseUserVolumeAccumulatorIxAccounts, CollectCreatorFee as CollectCreatorFeeIxAccounts, CreateInstructionArgs as CreateIxData, Create as CreateIxAccounts, CreateV2InstructionArgs as CreateV2IxData, CreateV2 as CreateV2IxAccounts, ExtendAccount as ExtendAccountIxAccounts, InitUserVolumeAccumulator as InitUserVolumeAccumulatorIxAccounts, Initialize as InitializeIxAccounts, Migrate as MigrateIxAccounts, SellInstructionArgs as SellIxData, Sell as SellIxAccounts, SetCreatorInstructionArgs as SetCreatorIxData, SetCreator as SetCreatorIxAccounts, SetMetaplexCreator as SetMetaplexCreatorIxAccounts, SetParamsInstructionArgs as SetParamsIxData, SetParams as SetParamsIxAccounts, SetReservedFeeRecipientsInstructionArgs as SetReservedFeeRecipientsIxData, SetReservedFeeRecipients as SetReservedFeeRecipientsIxAccounts, SyncUserVolumeAccumulator as SyncUserVolumeAccumulatorIxAccounts, ToggleCreateV2InstructionArgs as ToggleCreateV2IxData, ToggleCreateV2 as ToggleCreateV2IxAccounts, ToggleMayhemModeInstructionArgs as ToggleMayhemModeIxData, ToggleMayhemMode as ToggleMayhemModeIxAccounts, UpdateGlobalAuthority as UpdateGlobalAuthorityIxAccounts, };
+use crate::instructions::{AdminSetCreatorInstructionArgs as AdminSetCreatorIxData, AdminSetCreator as AdminSetCreatorIxAccounts, AdminSetIdlAuthorityInstructionArgs as AdminSetIdlAuthorityIxData, AdminSetIdlAuthority as AdminSetIdlAuthorityIxAccounts, AdminUpdateTokenIncentivesInstructionArgs as AdminUpdateTokenIncentivesIxData, AdminUpdateTokenIncentives as AdminUpdateTokenIncentivesIxAccounts, BuyInstructionArgs as BuyIxData, Buy as BuyIxAccounts, BuyExactSolInInstructionArgs as BuyExactSolInIxData, BuyExactSolIn as BuyExactSolInIxAccounts, ClaimCashback as ClaimCashbackIxAccounts, ClaimTokenIncentives as ClaimTokenIncentivesIxAccounts, CloseUserVolumeAccumulator as CloseUserVolumeAccumulatorIxAccounts, CollectCreatorFee as CollectCreatorFeeIxAccounts, CreateInstructionArgs as CreateIxData, Create as CreateIxAccounts, CreateV2InstructionArgs as CreateV2IxData, CreateV2 as CreateV2IxAccounts, DistributeCreatorFees as DistributeCreatorFeesIxAccounts, ExtendAccount as ExtendAccountIxAccounts, GetMinimumDistributableFee as GetMinimumDistributableFeeIxAccounts, InitUserVolumeAccumulator as InitUserVolumeAccumulatorIxAccounts, Initialize as InitializeIxAccounts, Migrate as MigrateIxAccounts, MigrateBondingCurveCreator as MigrateBondingCurveCreatorIxAccounts, SellInstructionArgs as SellIxData, Sell as SellIxAccounts, SetCreatorInstructionArgs as SetCreatorIxData, SetCreator as SetCreatorIxAccounts, SetMayhemVirtualParams as SetMayhemVirtualParamsIxAccounts, SetMetaplexCreator as SetMetaplexCreatorIxAccounts, SetParamsInstructionArgs as SetParamsIxData, SetParams as SetParamsIxAccounts, SetReservedFeeRecipientsInstructionArgs as SetReservedFeeRecipientsIxData, SetReservedFeeRecipients as SetReservedFeeRecipientsIxAccounts, SyncUserVolumeAccumulator as SyncUserVolumeAccumulatorIxAccounts, ToggleCashbackEnabledInstructionArgs as ToggleCashbackEnabledIxData, ToggleCashbackEnabled as ToggleCashbackEnabledIxAccounts, ToggleCreateV2InstructionArgs as ToggleCreateV2IxData, ToggleCreateV2 as ToggleCreateV2IxAccounts, ToggleMayhemModeInstructionArgs as ToggleMayhemModeIxData, ToggleMayhemMode as ToggleMayhemModeIxAccounts, UpdateGlobalAuthority as UpdateGlobalAuthorityIxAccounts, };
 
 /// Pump Instructions
 #[derive(Debug)]
@@ -25,21 +25,27 @@ pub enum PumpProgramIx {
                                 AdminUpdateTokenIncentives(AdminUpdateTokenIncentivesIxAccounts, AdminUpdateTokenIncentivesIxData),
                                 Buy(BuyIxAccounts, BuyIxData),
                                 BuyExactSolIn(BuyExactSolInIxAccounts, BuyExactSolInIxData),
+                                ClaimCashback(ClaimCashbackIxAccounts),
                                 ClaimTokenIncentives(ClaimTokenIncentivesIxAccounts),
                                 CloseUserVolumeAccumulator(CloseUserVolumeAccumulatorIxAccounts),
                                 CollectCreatorFee(CollectCreatorFeeIxAccounts),
                                 Create(CreateIxAccounts, CreateIxData),
                                 CreateV2(CreateV2IxAccounts, CreateV2IxData),
+                                DistributeCreatorFees(DistributeCreatorFeesIxAccounts),
                                 ExtendAccount(ExtendAccountIxAccounts),
+                                GetMinimumDistributableFee(GetMinimumDistributableFeeIxAccounts),
                                 InitUserVolumeAccumulator(InitUserVolumeAccumulatorIxAccounts),
                                 Initialize(InitializeIxAccounts),
                                 Migrate(MigrateIxAccounts),
+                                MigrateBondingCurveCreator(MigrateBondingCurveCreatorIxAccounts),
                                 Sell(SellIxAccounts, SellIxData),
                                 SetCreator(SetCreatorIxAccounts, SetCreatorIxData),
+                                SetMayhemVirtualParams(SetMayhemVirtualParamsIxAccounts),
                                 SetMetaplexCreator(SetMetaplexCreatorIxAccounts),
                                 SetParams(SetParamsIxAccounts, SetParamsIxData),
                                 SetReservedFeeRecipients(SetReservedFeeRecipientsIxAccounts, SetReservedFeeRecipientsIxData),
                                 SyncUserVolumeAccumulator(SyncUserVolumeAccumulatorIxAccounts),
+                                ToggleCashbackEnabled(ToggleCashbackEnabledIxAccounts, ToggleCashbackEnabledIxData),
                                 ToggleCreateV2(ToggleCreateV2IxAccounts, ToggleCreateV2IxData),
                                 ToggleMayhemMode(ToggleMayhemModeIxAccounts, ToggleMayhemModeIxData),
                                 UpdateGlobalAuthority(UpdateGlobalAuthorityIxAccounts),
@@ -207,6 +213,18 @@ impl InstructionParser {
                                                             let de_ix_data:BuyExactSolInIxData = deserialize_checked(ix_data, &ix_discriminator)?;
                                 Ok(PumpProgramIx::BuyExactSolIn(ix_accounts, de_ix_data))
                                                     },
+                                                                                [37, 58, 35, 126, 190, 53, 228, 197] => {
+                                                            let expected_accounts_len = 5;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = ClaimCashbackIxAccounts{
+                                                                                                            user: next_account(accounts)?,
+                                                                                                                                                user_volume_accumulator: next_account(accounts)?,
+                                                                                                                                                system_program: next_account(accounts)?,
+                                                                                                                                                event_authority: next_account(accounts)?,
+                                                                                                                                                program: next_account(accounts)?,
+                                                                                                };
+                                                            Ok(PumpProgramIx::ClaimCashback(ix_accounts))
+                                                    },
                                                                                 [16, 4, 71, 28, 204, 1, 40, 27] => {
                                                             let expected_accounts_len = 12;
                                                         check_min_accounts_req(accounts_len, expected_accounts_len)?;
@@ -295,6 +313,20 @@ impl InstructionParser {
                                                             let de_ix_data:CreateV2IxData = deserialize_checked(ix_data, &ix_discriminator)?;
                                 Ok(PumpProgramIx::CreateV2(ix_accounts, de_ix_data))
                                                     },
+                                                                                [165, 114, 103, 0, 121, 206, 247, 81] => {
+                                                            let expected_accounts_len = 7;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = DistributeCreatorFeesIxAccounts{
+                                                                                                            mint: next_account(accounts)?,
+                                                                                                                                                bonding_curve: next_account(accounts)?,
+                                                                                                                                                sharing_config: next_account(accounts)?,
+                                                                                                                                                creator_vault: next_account(accounts)?,
+                                                                                                                                                system_program: next_account(accounts)?,
+                                                                                                                                                event_authority: next_account(accounts)?,
+                                                                                                                                                program: next_account(accounts)?,
+                                                                                                };
+                                                            Ok(PumpProgramIx::DistributeCreatorFees(ix_accounts))
+                                                    },
                                                                                 [234, 102, 194, 203, 150, 72, 62, 229] => {
                                                             let expected_accounts_len = 5;
                                                         check_min_accounts_req(accounts_len, expected_accounts_len)?;
@@ -306,6 +338,17 @@ impl InstructionParser {
                                                                                                                                                 program: next_account(accounts)?,
                                                                                                 };
                                                             Ok(PumpProgramIx::ExtendAccount(ix_accounts))
+                                                    },
+                                                                                [117, 225, 127, 202, 134, 95, 68, 35] => {
+                                                            let expected_accounts_len = 4;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = GetMinimumDistributableFeeIxAccounts{
+                                                                                                            mint: next_account(accounts)?,
+                                                                                                                                                bonding_curve: next_account(accounts)?,
+                                                                                                                                                sharing_config: next_account(accounts)?,
+                                                                                                                                                creator_vault: next_account(accounts)?,
+                                                                                                };
+                                                            Ok(PumpProgramIx::GetMinimumDistributableFee(ix_accounts))
                                                     },
                                                                                 [94, 6, 202, 115, 255, 96, 232, 183] => {
                                                             let expected_accounts_len = 6;
@@ -361,6 +404,18 @@ impl InstructionParser {
                                                                                                 };
                                                             Ok(PumpProgramIx::Migrate(ix_accounts))
                                                     },
+                                                                                [87, 124, 52, 191, 52, 38, 214, 232] => {
+                                                            let expected_accounts_len = 5;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = MigrateBondingCurveCreatorIxAccounts{
+                                                                                                            mint: next_account(accounts)?,
+                                                                                                                                                bonding_curve: next_account(accounts)?,
+                                                                                                                                                sharing_config: next_account(accounts)?,
+                                                                                                                                                event_authority: next_account(accounts)?,
+                                                                                                                                                program: next_account(accounts)?,
+                                                                                                };
+                                                            Ok(PumpProgramIx::MigrateBondingCurveCreator(ix_accounts))
+                                                    },
                                                                                 [51, 230, 133, 164, 1, 127, 131, 173] => {
                                                             let expected_accounts_len = 14;
                                                         check_min_accounts_req(accounts_len, expected_accounts_len)?;
@@ -397,6 +452,21 @@ impl InstructionParser {
                                                                                                 };
                                                             let de_ix_data:SetCreatorIxData = deserialize_checked(ix_data, &ix_discriminator)?;
                                 Ok(PumpProgramIx::SetCreator(ix_accounts, de_ix_data))
+                                                    },
+                                                                                [61, 169, 188, 191, 153, 149, 42, 97] => {
+                                                            let expected_accounts_len = 8;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = SetMayhemVirtualParamsIxAccounts{
+                                                                                                            sol_vault_authority: next_account(accounts)?,
+                                                                                                                                                mayhem_token_vault: next_account(accounts)?,
+                                                                                                                                                mint: next_account(accounts)?,
+                                                                                                                                                global: next_account(accounts)?,
+                                                                                                                                                bonding_curve: next_account(accounts)?,
+                                                                                                                                                token_program: next_account(accounts)?,
+                                                                                                                                                event_authority: next_account(accounts)?,
+                                                                                                                                                program: next_account(accounts)?,
+                                                                                                };
+                                                            Ok(PumpProgramIx::SetMayhemVirtualParams(ix_accounts))
                                                     },
                                                                                 [138, 96, 174, 217, 48, 85, 197, 246] => {
                                                             let expected_accounts_len = 5;
@@ -445,6 +515,18 @@ impl InstructionParser {
                                                                                                                                                 program: next_account(accounts)?,
                                                                                                 };
                                                             Ok(PumpProgramIx::SyncUserVolumeAccumulator(ix_accounts))
+                                                    },
+                                                                                [115, 103, 224, 255, 189, 89, 86, 195] => {
+                                                            let expected_accounts_len = 4;
+                                                        check_min_accounts_req(accounts_len, expected_accounts_len)?;
+                            let ix_accounts = ToggleCashbackEnabledIxAccounts{
+                                                                                                            global: next_account(accounts)?,
+                                                                                                                                                authority: next_account(accounts)?,
+                                                                                                                                                event_authority: next_account(accounts)?,
+                                                                                                                                                program: next_account(accounts)?,
+                                                                                                };
+                                                            let de_ix_data:ToggleCashbackEnabledIxData = deserialize_checked(ix_data, &ix_discriminator)?;
+                                Ok(PumpProgramIx::ToggleCashbackEnabled(ix_accounts, de_ix_data))
                                                     },
                                                                                 [28, 255, 230, 240, 172, 107, 203, 171] => {
                                                             let expected_accounts_len = 4;
@@ -717,6 +799,18 @@ mod proto_parser {
                                             }
                 }
             }
+                    use super::ClaimCashbackIxAccounts;
+        impl IntoProto<proto_def::ClaimCashbackIxAccounts> for ClaimCashbackIxAccounts  {
+            fn into_proto(self) -> proto_def::ClaimCashbackIxAccounts {
+                proto_def::ClaimCashbackIxAccounts {
+                                                                        user: self.user.to_string(),
+                                                                                                user_volume_accumulator: self.user_volume_accumulator.to_string(),
+                                                                                                system_program: self.system_program.to_string(),
+                                                                                                event_authority: self.event_authority.to_string(),
+                                                                                                program: self.program.to_string(),
+                                                            }
+            }
+        }   
                     use super::ClaimTokenIncentivesIxAccounts;
         impl IntoProto<proto_def::ClaimTokenIncentivesIxAccounts> for ClaimTokenIncentivesIxAccounts  {
             fn into_proto(self) -> proto_def::ClaimTokenIncentivesIxAccounts {
@@ -823,9 +917,24 @@ mod proto_parser {
                                                     uri: self.uri,
                                                     creator: self.creator.to_string(),
                                                     is_mayhem_mode: self.is_mayhem_mode,
+                                                    is_cashback_enabled: Some(self.is_cashback_enabled.into_proto()),
                                             }
                 }
             }
+                    use super::DistributeCreatorFeesIxAccounts;
+        impl IntoProto<proto_def::DistributeCreatorFeesIxAccounts> for DistributeCreatorFeesIxAccounts  {
+            fn into_proto(self) -> proto_def::DistributeCreatorFeesIxAccounts {
+                proto_def::DistributeCreatorFeesIxAccounts {
+                                                                        mint: self.mint.to_string(),
+                                                                                                bonding_curve: self.bonding_curve.to_string(),
+                                                                                                sharing_config: self.sharing_config.to_string(),
+                                                                                                creator_vault: self.creator_vault.to_string(),
+                                                                                                system_program: self.system_program.to_string(),
+                                                                                                event_authority: self.event_authority.to_string(),
+                                                                                                program: self.program.to_string(),
+                                                            }
+            }
+        }   
                     use super::ExtendAccountIxAccounts;
         impl IntoProto<proto_def::ExtendAccountIxAccounts> for ExtendAccountIxAccounts  {
             fn into_proto(self) -> proto_def::ExtendAccountIxAccounts {
@@ -835,6 +944,17 @@ mod proto_parser {
                                                                                                 system_program: self.system_program.to_string(),
                                                                                                 event_authority: self.event_authority.to_string(),
                                                                                                 program: self.program.to_string(),
+                                                            }
+            }
+        }   
+                    use super::GetMinimumDistributableFeeIxAccounts;
+        impl IntoProto<proto_def::GetMinimumDistributableFeeIxAccounts> for GetMinimumDistributableFeeIxAccounts  {
+            fn into_proto(self) -> proto_def::GetMinimumDistributableFeeIxAccounts {
+                proto_def::GetMinimumDistributableFeeIxAccounts {
+                                                                        mint: self.mint.to_string(),
+                                                                                                bonding_curve: self.bonding_curve.to_string(),
+                                                                                                sharing_config: self.sharing_config.to_string(),
+                                                                                                creator_vault: self.creator_vault.to_string(),
                                                             }
             }
         }   
@@ -892,6 +1012,18 @@ mod proto_parser {
                                                             }
             }
         }   
+                    use super::MigrateBondingCurveCreatorIxAccounts;
+        impl IntoProto<proto_def::MigrateBondingCurveCreatorIxAccounts> for MigrateBondingCurveCreatorIxAccounts  {
+            fn into_proto(self) -> proto_def::MigrateBondingCurveCreatorIxAccounts {
+                proto_def::MigrateBondingCurveCreatorIxAccounts {
+                                                                        mint: self.mint.to_string(),
+                                                                                                bonding_curve: self.bonding_curve.to_string(),
+                                                                                                sharing_config: self.sharing_config.to_string(),
+                                                                                                event_authority: self.event_authority.to_string(),
+                                                                                                program: self.program.to_string(),
+                                                            }
+            }
+        }   
                     use super::SellIxAccounts;
         impl IntoProto<proto_def::SellIxAccounts> for SellIxAccounts  {
             fn into_proto(self) -> proto_def::SellIxAccounts {
@@ -944,6 +1076,21 @@ mod proto_parser {
                                             }
                 }
             }
+                    use super::SetMayhemVirtualParamsIxAccounts;
+        impl IntoProto<proto_def::SetMayhemVirtualParamsIxAccounts> for SetMayhemVirtualParamsIxAccounts  {
+            fn into_proto(self) -> proto_def::SetMayhemVirtualParamsIxAccounts {
+                proto_def::SetMayhemVirtualParamsIxAccounts {
+                                                                        sol_vault_authority: self.sol_vault_authority.to_string(),
+                                                                                                mayhem_token_vault: self.mayhem_token_vault.to_string(),
+                                                                                                mint: self.mint.to_string(),
+                                                                                                global: self.global.to_string(),
+                                                                                                bonding_curve: self.bonding_curve.to_string(),
+                                                                                                token_program: self.token_program.to_string(),
+                                                                                                event_authority: self.event_authority.to_string(),
+                                                                                                program: self.program.to_string(),
+                                                            }
+            }
+        }   
                     use super::SetMetaplexCreatorIxAccounts;
         impl IntoProto<proto_def::SetMetaplexCreatorIxAccounts> for SetMetaplexCreatorIxAccounts  {
             fn into_proto(self) -> proto_def::SetMetaplexCreatorIxAccounts {
@@ -1016,6 +1163,25 @@ mod proto_parser {
                                                             }
             }
         }   
+                    use super::ToggleCashbackEnabledIxAccounts;
+        impl IntoProto<proto_def::ToggleCashbackEnabledIxAccounts> for ToggleCashbackEnabledIxAccounts  {
+            fn into_proto(self) -> proto_def::ToggleCashbackEnabledIxAccounts {
+                proto_def::ToggleCashbackEnabledIxAccounts {
+                                                                        global: self.global.to_string(),
+                                                                                                authority: self.authority.to_string(),
+                                                                                                event_authority: self.event_authority.to_string(),
+                                                                                                program: self.program.to_string(),
+                                                            }
+            }
+        }   
+                    use super::ToggleCashbackEnabledIxData;
+            impl IntoProto<proto_def::ToggleCashbackEnabledIxData> for ToggleCashbackEnabledIxData  {
+                fn into_proto(self) -> proto_def::ToggleCashbackEnabledIxData {
+                    proto_def::ToggleCashbackEnabledIxData {
+                                                    enabled: self.enabled,
+                                            }
+                }
+            }
                     use super::ToggleCreateV2IxAccounts;
         impl IntoProto<proto_def::ToggleCreateV2IxAccounts> for ToggleCreateV2IxAccounts  {
             fn into_proto(self) -> proto_def::ToggleCreateV2IxAccounts {
@@ -1100,6 +1266,11 @@ mod proto_parser {
                                 data: Some(data.into_proto()),
                             })),
                         },
+                                                                                PumpProgramIx::ClaimCashback(acc) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::ClaimCashback(proto_def::ClaimCashbackIx {
+                                accounts: Some(acc.into_proto()),
+                            })),
+                        },
                                                                                 PumpProgramIx::ClaimTokenIncentives(acc) => proto_def::ProgramIxs {
                             ix_oneof: Some(proto_def::program_ixs::IxOneof::ClaimTokenIncentives(proto_def::ClaimTokenIncentivesIx {
                                 accounts: Some(acc.into_proto()),
@@ -1127,8 +1298,18 @@ mod proto_parser {
                                 data: Some(data.into_proto()),
                             })),
                         },
+                                                                                PumpProgramIx::DistributeCreatorFees(acc) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::DistributeCreatorFees(proto_def::DistributeCreatorFeesIx {
+                                accounts: Some(acc.into_proto()),
+                            })),
+                        },
                                                                                 PumpProgramIx::ExtendAccount(acc) => proto_def::ProgramIxs {
                             ix_oneof: Some(proto_def::program_ixs::IxOneof::ExtendAccount(proto_def::ExtendAccountIx {
+                                accounts: Some(acc.into_proto()),
+                            })),
+                        },
+                                                                                PumpProgramIx::GetMinimumDistributableFee(acc) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::GetMinimumDistributableFee(proto_def::GetMinimumDistributableFeeIx {
                                 accounts: Some(acc.into_proto()),
                             })),
                         },
@@ -1147,6 +1328,11 @@ mod proto_parser {
                                 accounts: Some(acc.into_proto()),
                             })),
                         },
+                                                                                PumpProgramIx::MigrateBondingCurveCreator(acc) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::MigrateBondingCurveCreator(proto_def::MigrateBondingCurveCreatorIx {
+                                accounts: Some(acc.into_proto()),
+                            })),
+                        },
                                                                                 PumpProgramIx::Sell(acc, data) => proto_def::ProgramIxs {
                             ix_oneof: Some(proto_def::program_ixs::IxOneof::Sell(proto_def::SellIx {
                                 accounts: Some(acc.into_proto()),
@@ -1157,6 +1343,11 @@ mod proto_parser {
                             ix_oneof: Some(proto_def::program_ixs::IxOneof::SetCreator(proto_def::SetCreatorIx {
                                 accounts: Some(acc.into_proto()),
                                 data: Some(data.into_proto()),
+                            })),
+                        },
+                                                                                PumpProgramIx::SetMayhemVirtualParams(acc) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::SetMayhemVirtualParams(proto_def::SetMayhemVirtualParamsIx {
+                                accounts: Some(acc.into_proto()),
                             })),
                         },
                                                                                 PumpProgramIx::SetMetaplexCreator(acc) => proto_def::ProgramIxs {
@@ -1179,6 +1370,12 @@ mod proto_parser {
                                                                                 PumpProgramIx::SyncUserVolumeAccumulator(acc) => proto_def::ProgramIxs {
                             ix_oneof: Some(proto_def::program_ixs::IxOneof::SyncUserVolumeAccumulator(proto_def::SyncUserVolumeAccumulatorIx {
                                 accounts: Some(acc.into_proto()),
+                            })),
+                        },
+                                                                                PumpProgramIx::ToggleCashbackEnabled(acc, data) => proto_def::ProgramIxs {
+                            ix_oneof: Some(proto_def::program_ixs::IxOneof::ToggleCashbackEnabled(proto_def::ToggleCashbackEnabledIx {
+                                accounts: Some(acc.into_proto()),
+                                data: Some(data.into_proto()),
                             })),
                         },
                                                                                 PumpProgramIx::ToggleCreateV2(acc, data) => proto_def::ProgramIxs {

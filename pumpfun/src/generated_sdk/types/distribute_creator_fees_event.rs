@@ -6,42 +6,24 @@
 //!
 
 use solana_pubkey::Pubkey;
+use crate::generated::types::Shareholder;
 use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
 
-/// ix_name: "buy" | "sell" | "buy_exact_sol_in"
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TradeEvent {
+pub struct DistributeCreatorFeesEvent {
+pub timestamp: i64,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
 pub mint: Pubkey,
-pub sol_amount: u64,
-pub token_amount: u64,
-pub is_buy: bool,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub user: Pubkey,
-pub timestamp: i64,
-pub virtual_sol_reserves: u64,
-pub virtual_token_reserves: u64,
-pub real_sol_reserves: u64,
-pub real_token_reserves: u64,
+pub bonding_curve: Pubkey,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub fee_recipient: Pubkey,
-pub fee_basis_points: u64,
-pub fee: u64,
+pub sharing_config: Pubkey,
 #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub creator: Pubkey,
-pub creator_fee_basis_points: u64,
-pub creator_fee: u64,
-pub track_volume: bool,
-pub total_unclaimed_tokens: u64,
-pub total_claimed_tokens: u64,
-pub current_sol_volume: u64,
-pub last_update_timestamp: i64,
-pub ix_name: String,
-pub mayhem_mode: bool,
-pub cashback_fee_basis_points: u64,
-pub cashback: u64,
+pub admin: Pubkey,
+pub shareholders: Vec<Shareholder>,
+pub distributed: u64,
 }
 
 

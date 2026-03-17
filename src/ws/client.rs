@@ -36,7 +36,7 @@ pub async fn run(config: Config) -> Result<()> {
             .context("Failed to init Redis")?,
     );
 
-    let sem = Arc::new(Semaphore::new(20));
+    let sem = Arc::new(Semaphore::new(100));
     // App handler task
     let metrics_for_dispatcher = metrics.clone();
     let redis_for_dispatcher = redis_manager.clone();

@@ -46,6 +46,18 @@ pub mod proto_types_parsers {
                                     }
             }
         }   
+            use crate::types::ClaimCashbackEvent;
+        impl IntoProto<proto_def::ClaimCashbackEvent> for ClaimCashbackEvent {
+            fn into_proto(self) -> proto_def::ClaimCashbackEvent {
+                proto_def::ClaimCashbackEvent {
+                                            user: self.user.to_string(),
+                                            amount: self.amount,
+                                            timestamp: self.timestamp,
+                                            total_claimed: self.total_claimed,
+                                            total_cashback_earned: self.total_cashback_earned,
+                                    }
+            }
+        }   
             use crate::types::ClaimTokenIncentivesEvent;
         impl IntoProto<proto_def::ClaimTokenIncentivesEvent> for ClaimTokenIncentivesEvent {
             fn into_proto(self) -> proto_def::ClaimTokenIncentivesEvent {
@@ -126,6 +138,21 @@ pub mod proto_types_parsers {
                                             token_total_supply: self.token_total_supply,
                                             token_program: self.token_program.to_string(),
                                             is_mayhem_mode: self.is_mayhem_mode,
+                                            is_cashback_enabled: self.is_cashback_enabled,
+                                    }
+            }
+        }   
+            use crate::types::DistributeCreatorFeesEvent;
+        impl IntoProto<proto_def::DistributeCreatorFeesEvent> for DistributeCreatorFeesEvent {
+            fn into_proto(self) -> proto_def::DistributeCreatorFeesEvent {
+                proto_def::DistributeCreatorFeesEvent {
+                                            timestamp: self.timestamp,
+                                            mint: self.mint.to_string(),
+                                            bonding_curve: self.bonding_curve.to_string(),
+                                            sharing_config: self.sharing_config.to_string(),
+                                            admin: self.admin.to_string(),
+                                            shareholders: self.shareholders.into_iter().map(|x| x.into_proto()).collect(),
+                                            distributed: self.distributed,
                                     }
             }
         }   
@@ -167,6 +194,29 @@ pub mod proto_types_parsers {
                                             payer: self.payer.to_string(),
                                             user: self.user.to_string(),
                                             timestamp: self.timestamp,
+                                    }
+            }
+        }   
+            use crate::types::MigrateBondingCurveCreatorEvent;
+        impl IntoProto<proto_def::MigrateBondingCurveCreatorEvent> for MigrateBondingCurveCreatorEvent {
+            fn into_proto(self) -> proto_def::MigrateBondingCurveCreatorEvent {
+                proto_def::MigrateBondingCurveCreatorEvent {
+                                            timestamp: self.timestamp,
+                                            mint: self.mint.to_string(),
+                                            bonding_curve: self.bonding_curve.to_string(),
+                                            sharing_config: self.sharing_config.to_string(),
+                                            old_creator: self.old_creator.to_string(),
+                                            new_creator: self.new_creator.to_string(),
+                                    }
+            }
+        }   
+            use crate::types::MinimumDistributableFeeEvent;
+        impl IntoProto<proto_def::MinimumDistributableFeeEvent> for MinimumDistributableFeeEvent {
+            fn into_proto(self) -> proto_def::MinimumDistributableFeeEvent {
+                proto_def::MinimumDistributableFeeEvent {
+                                            minimum_required: self.minimum_required,
+                                            distributable_fees: self.distributable_fees,
+                                            can_distribute: self.can_distribute,
                                     }
             }
         }   
@@ -232,6 +282,15 @@ pub mod proto_types_parsers {
                                     }
             }
         }   
+            use crate::types::Shareholder;
+        impl IntoProto<proto_def::Shareholder> for Shareholder {
+            fn into_proto(self) -> proto_def::Shareholder {
+                proto_def::Shareholder {
+                                            address: self.address.to_string(),
+                                            share_bps: self.share_bps.into(),
+                                    }
+            }
+        }   
             use crate::types::SyncUserVolumeAccumulatorEvent;
         impl IntoProto<proto_def::SyncUserVolumeAccumulatorEvent> for SyncUserVolumeAccumulatorEvent {
             fn into_proto(self) -> proto_def::SyncUserVolumeAccumulatorEvent {
@@ -269,6 +328,9 @@ pub mod proto_types_parsers {
                                             current_sol_volume: self.current_sol_volume,
                                             last_update_timestamp: self.last_update_timestamp,
                                             ix_name: self.ix_name,
+                                            mayhem_mode: self.mayhem_mode,
+                                            cashback_fee_basis_points: self.cashback_fee_basis_points,
+                                            cashback: self.cashback,
                                     }
             }
         }   
@@ -280,6 +342,21 @@ pub mod proto_types_parsers {
                                             authority: self.authority.to_string(),
                                             new_authority: self.new_authority.to_string(),
                                             timestamp: self.timestamp,
+                                    }
+            }
+        }   
+            use crate::types::UpdateMayhemVirtualParamsEvent;
+        impl IntoProto<proto_def::UpdateMayhemVirtualParamsEvent> for UpdateMayhemVirtualParamsEvent {
+            fn into_proto(self) -> proto_def::UpdateMayhemVirtualParamsEvent {
+                proto_def::UpdateMayhemVirtualParamsEvent {
+                                            timestamp: self.timestamp,
+                                            mint: self.mint.to_string(),
+                                            virtual_token_reserves: self.virtual_token_reserves,
+                                            virtual_sol_reserves: self.virtual_sol_reserves,
+                                            new_virtual_token_reserves: self.new_virtual_token_reserves,
+                                            new_virtual_sol_reserves: self.new_virtual_sol_reserves,
+                                            real_token_reserves: self.real_token_reserves,
+                                            real_sol_reserves: self.real_sol_reserves,
                                     }
             }
         }   
